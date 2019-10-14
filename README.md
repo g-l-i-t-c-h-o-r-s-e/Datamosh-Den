@@ -10,3 +10,5 @@ Version 3.3.2 has some codecs and filters the newest one doesnt have anymore, mi
 This GUI lists whatever codecs the FFmpeg build you have can encode with; put _ffmpeg.exe_ and _ffplay.exe_ in the same folder as the script please.
 
 I included a build of MEncoder, MPlayer and more. The MPlayer devs at some point changed how MEncoder/MPlayer handles vfw(Video For Windows) video codecs; but I found a [forum post]( https://spreadys.wordpress.com/2013/03/29/imm4-codec-and-mencoder/) that explains this and links a working MEncoder build compatible with vfw codecs. I already provided that MEncoder build in this repository but if you want to see it for yourself the link is in [here]( https://app.box.com/v/Spreadys), password is: validate
+
+Tomato can be found [here.]( https://github.com/itsKaspar/tomato) Thank you Kaspar <333
