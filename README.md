@@ -1,2 +1,4 @@
 # Datamosh-Den
-A Combination of FFmpeg, MEncoder and Tomato.py into a GUI for an ez/fast datamosh workflow
+Ohey me again with another wacky script i conjured up in AutoHotkey :b
+
+![img1](https://i.imgur.com/lSErFpU.png)
