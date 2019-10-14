@@ -1,6 +1,6 @@
 
 # OwO 
-Ohey me again with another wacky script i conjured up in AutoHotkey :b             
+Ohey me again with another wacky script i conjured up in AutoHotkey Version 1.1.30.03 :b             
 Hopefully this will make Datamoshing more accesible to people on Windows who aren't familiar with the command line.
 
 ![img1](https://i.imgur.com/lSErFpU.png)
