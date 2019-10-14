@@ -84,7 +84,7 @@ Gui Add, GroupBox, x17 y226 w168 h125, FFmpeg Codecs
 Gui Add, ComboBox, x39 y314 w120 vFFmpegCodecs, %FFEncoderList%
 
 Gui Add, GroupBox, x219 y97 w270 h253, Tomato Datamoshing
-Gui Add, ComboBox, x286 y170 w120 Choose6 vTomatoMode, ikill|iswap|bloom|pulse|shuffle|overlapped|jiggle
+Gui Add, ComboBox, x286 y170 w120 Choose6 vTomatoMode, irep|ikill|iswap|bloom|pulse|shuffle|overlapped|jiggle|reverse|invert
 Gui Add, Edit, x325 y217 w41 h21 vTomatoFrameCount +Center, 4
 Gui Add, Edit, x325 y264 w41 h21 vTomatoFramePosition +Center, 2
 Gui Add, Text, x314 y194 w62 h23 +0x200, Frame Count
