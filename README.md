@@ -1,7 +1,7 @@
 
 # OwO 
-Ohey me again with another wacky script i conjured up in AutoHotkey :b
-Hopefully this will making Datamoshig more accesible to people on Windows who aren't familiar with the command line.
+Ohey me again with another wacky script i conjured up in AutoHotkey :b             
+Hopefully this will make Datamoshing more accesible to people on Windows who aren't familiar with the command line.
 
 ![img1](https://i.imgur.com/lSErFpU.png)
 
