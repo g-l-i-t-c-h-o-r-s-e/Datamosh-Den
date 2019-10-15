@@ -37,3 +37,5 @@ Tomato can be found [here.]( https://github.com/itsKaspar/tomato) Thank you Kasp
 • More codecs
 
 • Segment video into multiple files and apply random Tomato settings to each one
+
+• Add Webcam input and device list
