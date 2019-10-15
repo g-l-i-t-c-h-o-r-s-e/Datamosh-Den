@@ -6,9 +6,9 @@ Hopefully this will make Datamoshing more accesible to people on Windows who are
 ![img1](https://i.imgur.com/lSErFpU.png)
 
 # Features 
-• Quick video playback of the datamoshed video
+• Quick video playback of the datamoshed avi
 
-• Use of many Video For Windows codecs seen nowhere else
+• Use of many Video For Windows codecs, some seen nowhere else
 
 • Ability to add custom codecs via adding dll to codec folder and codecs.conf
 
