@@ -14,6 +14,10 @@ Hopefully this will make Datamoshing more accesible to people on Windows who are
 
 • Fast EZ Baking options ranging from raw yuv4mpeg, mp4 and png frame output!
 
+• Repeatedly iterate different datamosh settings on the same file via Remosh 
+
+• Compress the datamoshed avi again with a new codec to stack compression artifacts!
+
 # Because github won't let me upload big ass files, you'll need to grab a copy of FFmpeg and FFplay yourself from [here]( https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.2.1-win64-static.zip)
 Version 3.3.2 has some codecs and filters the newest one doesnt have anymore (libxavs, frei0r, etc) might wanna [try that out too.]( https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-3.3.2-win64-static.zip)                            
 This GUI lists whatever codecs the FFmpeg build you have can encode with; put _ffmpeg.exe_ and _ffplay.exe_ in the same folder as the script please.
