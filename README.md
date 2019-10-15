@@ -39,3 +39,5 @@ Tomato can be found [here.]( https://github.com/itsKaspar/tomato) Thank you Kasp
 • Segment video into multiple files and apply random Tomato settings to each one
 
 • Add Webcam input and device list
+
+• Fix HEVC/H265 decode 
