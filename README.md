@@ -41,3 +41,5 @@ Tomato can be found [here.]( https://github.com/itsKaspar/tomato) Thank you Kasp
 • Fix HEVC/H265 decode 
 
 • More codecs
+
+• Batch file input
