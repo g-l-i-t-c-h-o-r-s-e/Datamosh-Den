@@ -7,8 +7,11 @@ Hopefully this will make Datamoshing more accesible to people on Windows who are
 
 # Features 
 • Quick video playback of the datamoshed video
+
 • Use of many Video For Windows codecs seen nowhere else
+
 • Ability to add custom codecs via adding dll to codec folder and codecs.conf
+
 • Fast EZ Baking options ranging from raw yuv4mpeg, mp4 and png frame output!
 
 # Because github won't let me upload big ass files, you'll need to grab a copy of FFmpeg and FFplay yourself from [here]( https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.2.1-win64-static.zip)
