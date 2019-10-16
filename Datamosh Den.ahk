@@ -67,6 +67,18 @@ BakeGUI() {
 	WinWaitClose, Shall We Bake Some More???	
 }
 
+AMV2GUI() {
+	WinWaitClose, cmd
+	Gui, 3:Add, Button, x10 y66 w35 h24 gAMV2Preset640, 640
+	Gui, 3:Add, Button, x46 y66 w35 h24 gAMV2Preset1280, 1280
+	Gui, 3:Add, Button, x82 y66 w35 h24 gOption4k, 4K
+	Gui, 3:Add, Button, x118 y66 w35 h24 Default gOptionNone, Nah
+	Gui, 3:Add, Text, x2 y-2 w162 h66, `n        Would ulike to Remove                       The Watermark? `n  (In case ur cheap like me and        don't wanna pay for this codec.)
+	Gui, 3:Show, w162 h100,AMV2 Watermark Removal Hack
+	Gui, 3:-Sysmenu
+	WinWaitClose, AMV2 Watermark Removal Hack	
+}
+
 Gui Add, GroupBox, x134 y10 w216 h76, Input Options
 Gui Add, Button, x148 y28 w44 h43 gSelectSource, Source
 Gui Add, Edit, x203 y44 w63 h21 +Center vResolutionVar, 640x360
@@ -268,9 +280,15 @@ if (MencoderCodecs = "vp31vfw.dll") {
 	;Configure dialog is broken for vp3.
 }
 
+
 gosub, EnableForceRate
 gosub, EnableForceRes
 
+if (MencoderCodecs = "Amv2Codec.dll") {
+	gosub, CustomAMV2Compression
+	Return
+	;Configure dialog is broken for vp3.
+}
 
 if (SourceFile = "") {
 	msgbox, Select Something Yo.
@@ -360,6 +378,74 @@ GuiControl, 1:Enable, TomatoFramePosition
 GuiControl, 1:Enable, TomatoMOSHIT
 Return
 
+CustomAMV2Compression:
+Gui, Submit, NoHide
+if (SourceFile = "") {
+	msgbox, Select Something Yo.
+	return
+}
+
+RecompressVar := "AMV2"
+config = ":compdata=dialog"
+RecompressVar := "MEncoder"
+whichPreset := ""
+
+;Places black bar at the bottom of the video, isolating the watermark, -sws 4 helps with quality loss upon scaling.
+AMV2BufferWatermark1 := " -sws 4 -vf scale=640:360,expand=0:-70:0:0,scale=640:360" 
+AMV2BufferWatermark2 := " -sws 4 -vf scale=1280:720,expand=0:-170:0:0,scale=1280:720"
+AMV2BufferWatermark3 := " -sws 4 -vf scale=3840:2160,expand=0:-330:0:0,scale=3840:2160"
+
+
+;Crops out the isolated watermark
+;AMV2RemoveWatermark1 := "-vf crop=640:300:0:60"
+;AMV2RemoveWatermark2 := "-vf crop=1280:580:0:140"
+;AMV2RemoveWatermark3 := " -vf crop=3840:1860:0:290"
+
+
+gosub, EnableForceRate
+gosub, EnableForceRes
+
+msgbox, Testing Custom amv2 compression, removing watermark, etc.
+;Select Preset for now.
+AMV2GUI()
+
+MECommand := cmd.exe /k "mencoder " . chr(0x22) . SourceFile . chr(0x22) . whichPreset . FrameRate . " -of avi -o output.avi -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
+
+MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
+
+
+msgbox, You may now use the Tomato window to Datamosh!
+GuiControl, 1:Enable, TomatoMode
+GuiControl, 1:Enable, TomatoFrameCount
+GuiControl, 1:Enable, TomatoFramePosition
+GuiControl, 1:Enable, TomatoMOSHIT
+Return
+
+;AMV2 Watermark Removal Presets
+AMV2Preset640:
+Gui, 3:Destroy
+whichPreset := AMV2BufferWatermark1
+Sel := 1
+return
+
+AMV2Preset1280:
+Gui, 3:Destroy
+whichPreset := AMV2BufferWatermark2
+Sel := 2
+return
+
+Option4K:
+Gui, 3:Destroy
+whichPreset := AMV2BufferWatermark3
+Sel := 3
+Return
+
+OptionNone:
+Gui, 3:Destroy
+whichPreset := ResolutionVar
+Sel := 4
+Return
+;/AMV2 Watermark Removal Presets
 
 
 ;wao now we got all the FFmpeg codecs too lol
@@ -554,19 +640,49 @@ python tomato.py -i input.avi -m overlapped -c 4 -n 2 output.avi
 )
 Return
 
+CustomCodecShit:
+GuiControlGet, MencoderCodecs
+CustomCodecFix := ""
+LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
 
+if (MencoderCodecs = "smv2.dll") {
+	
+	CustomCodecFix := "-vc smv2Old"
+	;Forces the custom decoder I added to the codecs.config
+}
+
+;Removes the watermark burnt into the video by AMV2
+if (MencoderCodecs = "Amv2Codec.dll") {
+	;msgbox, Using Custom AMV2 Watermark Removal.
+    ;Crops out the isolated watermark
+	AMV2RemoveWatermark1 := " -sws 4 -vf crop=640:300:0:60,scale=640:360"
+	AMV2RemoveWatermark2 := " -sws 4 -vf crop=1280:580:0:140,scale=1280:720"
+	AMV2RemoveWatermark3 := " -sws 4 -vf crop=3840:1860:0:290,scale=3840:2160"
+	
+	
+	if (Sel = 1) {
+		CustomCodecFix := AMV2RemoveWatermark1
+		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
+	}
+	if (sel = 2) {
+		CustomCodecFix := AMV2RemoveWatermark2
+		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
+	}
+	if (sel = 3) {
+		CustomCodecFix := AMV2RemoveWatermark3
+		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0 -fs"
+	}
+	
+	Return
+	
+}
+Return
 
 CommenceTomatoDatamosh:
 ;Destroy AVI Index via Tomato for Datamoshed Goodness!
 Gui, Submit, Nohide
 
-GuiControlGet, MencoderCodecs
-OlderSMV2Fix := ""
-if (MencoderCodecs = "smv2.dll") {
-	OlderSMV2Fix := "-vc smv2Old"
-	;Forces the custom decoder I added to the codecs.config
-}
-LemmeSeeIt := "cmd.exe /c mplayer " . OlderSMV2Fix . " output-moshed.avi -loop 0"
+gosub, CustomCodecShit
 
 runwait, %ComSpec% /c python tomato.py -i output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed.avi
 runwait, %LemmeSeeIt%
@@ -582,12 +698,8 @@ RecycleTomatoOutput:
 ;Destroy AVI Index of the Previous file via Tomato for even more Datamoshed Goodness!!!
 Gui, Submit, Nohide
 
-OlderSMV2Fix := ""
-if (MencoderCodecs = "smv2.dll") {
-	OlderSMV2Fix := "-vc smv2Old"
-	;Forces the custom decoder I added to the codecs.config
-}
-LemmeSeeIt := "mplayer " . OlderSMV2Fix . " output-moshed2.avi -loop 0"
+gosub, CustomCodecShit
+LemmeSeeIt := "mplayer " . CustomCodecFix . " output-moshed2.avi -loop 0"
 
 runwait, %ComSpec% /c python tomato.py -i output-moshed.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed2.avi
 runwait, %LemmeSeeIt%
@@ -614,11 +726,18 @@ if (RecompressVar = "FFmpeg") {
 	return
 }
 
+if (RecompressVar = "AMV2") {
+	msgbox, Compressing the moshed file,`nwith the beta AMV2 Watermark removal!
+	gosub, CustomAMV2Compression
+	return
+}
+Return
+
 PlsBakePNG:
 ;Dat image output tho
 Gui, 3:Destroy
 CheckItOut := "ffplay -i FRAMES/%08d.png -loop 0"
-ReBake := "mplayer " . OlderSMV2Fix . " output-moshed.avi -vo png:outdir=FRAMES -cache 1024"
+ReBake := "mplayer " . CustomCodecFix . " output-moshed.avi -vo png:outdir=FRAMES -cache 1024"
 runwait, %ReBake%
 sleep, 20
 WinWaitClose, cmd
@@ -632,7 +751,7 @@ PlsBakeMP4:
 ;I added noskip to make the output more smooth.
 Gui, 3:Destroy
 FileDelete, ReBaked.mp4
-ReBake := "mencoder output-moshed.avi -ovc x264 -x264encopts crf=1.0 -noskip -o ReBaked.mp4 -of lavf"
+ReBake := "mencoder " . CustomCodecFix . " output-moshed.avi -ovc x264 -x264encopts crf=1.0 -noskip -o ReBaked.mp4 -of lavf"
 runwait, %ReBake%
 sleep, 20
 WinWaitClose, cmd
@@ -644,7 +763,7 @@ PlsBakeYUV:
 ;This Method reduces/elimanates duplicate/frozen frames, which also speeds up video.
 Gui, 3:Destroy
 FileDelete, ReBaked.yuv
-ReBake := "mplayer " . OlderSMV2Fix . " -vo yuv4mpeg output-moshed.avi"
+ReBake := "mplayer " . CustomCodecFix . " -vo yuv4mpeg output-moshed.avi"
 runwait, %ReBake%
 sleep, 20
 WinWaitClose, cmd
