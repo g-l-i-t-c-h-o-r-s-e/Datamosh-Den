@@ -571,7 +571,7 @@ if (ResolutionVar = " -vf scale=") {
 	return
 }
 
-MECommand := cmd.exe /c "mencoder " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . " -of avi -o output.avi -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
+MECommand := cmd.exe /c "mencoder " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -of avi -o output.avi -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
    ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
