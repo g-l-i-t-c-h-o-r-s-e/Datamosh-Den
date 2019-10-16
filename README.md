@@ -35,7 +35,7 @@ Tomato can be found [here.]( https://github.com/itsKaspar/tomato) Thank you Kasp
 
 • Segment video into multiple files and apply random Tomato settings to each one [✖]
 
-• Add Force Frame Rate(FPS) to RetryScale function [✖]
+• Add Force Frame Rate(FPS) to RetryScale function [✔]
 
 • Add bypass compression for pre-encoded files [✖]
 
