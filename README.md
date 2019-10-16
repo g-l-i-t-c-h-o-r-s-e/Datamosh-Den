@@ -31,16 +31,18 @@ Tomato can be found [here.]( https://github.com/itsKaspar/tomato) Thank you Kasp
 
 # TODO
 
-• Segment video into multiple files and apply random Tomato settings to each one
+• AMV Watermark Cropping [✔]
 
-• Add Force Frame Rate(FPS) to RetryScale function 
+• Segment video into multiple files and apply random Tomato settings to each one []
 
-• Add bypass compression for pre-encoded files
+• Add Force Frame Rate(FPS) to RetryScale function []
 
-• Add Webcam input and device list
+• Add bypass compression for pre-encoded files []
 
-• Fix HEVC/H265 decode 
+• Add Webcam input and device list []
 
-• Batch file input
+• Fix HEVC/H265 decode []
+
+• Batch file input []
 
 • More codecs
