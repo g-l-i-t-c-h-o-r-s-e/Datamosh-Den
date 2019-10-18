@@ -30,6 +30,7 @@ Loop, % encoders.Length() {
 	FFEncoderList .= encoders[A_Index] . "|"
 }
 ;;;;;;Omited Decoder List;;;;;;
+;
 ;  if (thisMatch.decodes) {
 ;    decoders.push(thisMatch.name)
 ;    if (thisMatch.decoders)
@@ -45,17 +46,11 @@ Loop, % encoders.Length() {
 ;Purge audio and subtitle codecs from Video Encoder list!!!
 Needle := "aac"
 FFEncoderList := SubStr(FFEncoderList, 1, InStr(FFEncoderList, Needle)-1) . "|"
-;FFEncoderList := StrReplace(FFEncoderList, "cavs", "", "All")
 
-loop
-{
-	;Clean up the non-glitching encoders from list, should be mostly done.	
-	count +=1
-	Strip := ["cavs|" , "a64_multi|" , "a64multi|" , "a64_multi5|" , "a64multi5|" , "alias_pix|" , "apng|" , "avrp|" , "avui|" , "ayuv|" , "bmp|" , "cljr|" , "dpx|" , "h264_nvenc|" , "h264_qsv|" , "nvenc_hevc|" , "hevc_nvenc|" , "hevc_qsv|" , "nvenc|" , "nvenc_h264|" , "huffyuv|" , "jpegls|" , "ljpeg|" , "mjpeg|" , "mpeg2_qsv|" , "pam|" , "pbm|" , "pcx|" , "pgm|" , "pgmyuv|" , "png|" , "ppm|" , "r10k|", "r210|" , "v210|" , "v308|" , "v310|" , "v408|" , "v410|" , "sgi|" , "sunrast|" , "targa|" , "tiff|" , "rv10|" , "rv20|" , "rawvideo|" , "libwebp|" , "webp|" , "wrapped_avframe|" , "xbm|" , "xface|" , "xwd|" , "y41p|" , "yuv4|"]	
-	Kill := Strip.MaxIndex()
-	FFEncoderList := StrReplace(FFEncoderList, Strip[count],, "All")
-	if (count = Kill)  ; No more replacements needed.
-		break
+;Strip non-glitching codecs from the FFmpeg video codec list, mostly done.
+Strip := ["amv|" , "asv1|" , "asv2|" , "cavs|" , "a64_multi|" , "a64multi|" , "a64_multi5|" , "a64multi5|" , "alias_pix|" , "apng|" , "avrp|" , "avui|" , "ayuv|" , "bmp|" , "cljr|" , "dpx|" , "h264_nvenc|" , "h264_qsv|" , "nvenc_hevc|" , "hevc_nvenc|" , "hevc_qsv|" , "nvenc|" , "nvenc_h264|" , "huffyuv|" , "jpegls|" , "ljpeg|" , "mjpeg|" , "mpeg2_qsv|" , "pam|" , "pbm|" , "pcx|" , "pgm|" , "pgmyuv|" , "png|" , "ppm|" , "r10k|", "r210|" , "v210|" , "v308|" , "v310|" , "v408|" , "v410|" , "sgi|" , "sunrast|" , "targa|" , "tiff|" , "rv10|" , "rv20|" , "rawvideo|" , "libwebp|" , "webp|" , "wrapped_avframe|" , "xbm|" , "xface|" , "xwd|" , "y41p|" , "yuv4|"]
+for _, val in Strip {
+	FFEncoderList := StrReplace(FFEncoderList, val)
 }
 
 ;Populate MEncoder Codecs list.
@@ -63,6 +58,7 @@ codecs := A_ScriptDir . "/codecs/*.dll"
 loop, files, %codecs%
 {
 	CodecList .= A_LoopFileName  . "|"
+	CodecList := StrReplace(CodecList, "msvcr70.dll")
 }
 
 
@@ -204,7 +200,7 @@ gosub, EnableForceRate
 gosub, EnableForceRes
 
 if (WebcamCompression = 1) {
-	FFWebcamCompress := cmd.exe /k "ffmpeg " . InputFrameRate . WebCam . ResolutionVar . FrameRate . " -f avi -c:v copy webcam-output.avi -y" ;last edit here
+	FFWebcamCompress := cmd.exe /k "ffmpeg " . InputFrameRate . WebCam . ResolutionVar . FrameRate . " -f avi -c:v huffyuv webcam-output.avi -y"
 	;msgbox, %FFWebcamCompress%
 	runwait, %FFWebcamCompress%	
 	SourceFile := "webcam-output.avi"
@@ -550,7 +546,7 @@ if (SourceFile = "") {
 	return
 }
 
-FFCommand := cmd.exe /k "ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -f avi -c:v " . FFmpegCodecs . " " . FFmpegOptions . " output.avi -y"
+FFCommand := cmd.exe /k "ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " " . FFmpegOptions . " output.avi -y"
   ;MsgBox, %FFCommand%
 
   ;Execute FFmpeg Here, also reads Standard Error Output.
@@ -605,7 +601,7 @@ if (ResolutionVar = " -vf scale=") {
 	return
 }
 
-FFCommand := cmd.exe /k "ffmpeg -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . " -f avi -c:v " . FFmpegCodecs . " " . FFmpegOptions . " output.avi -y"
+FFCommand := cmd.exe /k "ffmpeg -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . " -f avi -strict -2 -c:v " . FFmpegCodecs . " " . FFmpegOptions . " output.avi -y"
    ;MsgBox, %FFCommand%
 
   ;Execute MEncoder Here, also reads Standard Error Output.
