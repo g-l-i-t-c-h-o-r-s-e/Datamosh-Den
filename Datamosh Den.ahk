@@ -45,7 +45,18 @@ Loop, % encoders.Length() {
 ;Purge audio and subtitle codecs from Video Encoder list!!!
 Needle := "aac"
 FFEncoderList := SubStr(FFEncoderList, 1, InStr(FFEncoderList, Needle)-1) . "|"
+;FFEncoderList := StrReplace(FFEncoderList, "cavs", "", "All")
 
+loop
+{
+	;Clean up the non-glitching encoders from list, should be mostly done.	
+	count +=1
+	Strip := ["cavs|" , "a64_multi|" , "a64multi|" , "a64_multi5|" , "a64multi5|" , "alias_pix|" , "apng" , "avrp|" , "avui|" , "ayuv" , "bmp|" , "cljr" , "dpx" , "h264_nvenc" , "h264_qsv|" , "nvenc_hevc" , "hevc_nvenc|" , "hevc_qsv|" , "nvenc|" , "nvenc_h264|" , "huffyuv|" , "jpegls|" , "ljpeg|" , "mjpeg|" , "mpeg2_qsv|" , "pam|" , "pbm|" , "pcx|" , "pgm|" , "pgmyuv|" , "png|" , "ppm|" , "r10k|", "r210|" , "v210|" , "v308|" , "v310|" , "v408|" , "v410|" , "sgi|" , "sunrast|" , "targa|" , "tiff|" , "rv10|" , "rv20|" , "rawvideo" , "webp|" , "libwebp|" , "wrapped_avframe" , "xbm|" , "xface|" , "xwd|" , "y41p|" , "yuv4|"]	
+	Kill := Strip.MaxIndex()
+	FFEncoderList := StrReplace(FFEncoderList, Strip[count],"", "All")
+	if (count = Kill)  ; No more replacements needed.
+		break
+}
 
 ;Populate MEncoder Codecs list.
 codecs := A_ScriptDir . "/codecs/*.dll"
@@ -53,6 +64,7 @@ loop, files, %codecs%
 {
 	CodecList .= A_LoopFileName  . "|"
 }
+
 
 ;Custom GUI for baking yo files.
 BakeGUI() {
@@ -79,14 +91,14 @@ AMV2GUI() {
 	WinWaitClose, AMV2 Watermark Removal Hack	
 }
 
-Gui Add, GroupBox, x134 y10 w216 h76, Input Options
-Gui Add, Button, x148 y28 w44 h43 gSelectSource, Source
-Gui Add, Edit, x203 y44 w63 h21 +Center vResolutionVar, 640x360
-Gui Add, Text, x208 y28 w56 h14 +0x200, Resolution
-Gui Add, Edit, x279 y44 w30 h21 +Center vFrameRateVar, 60
-Gui Add, Text, x269 y28 w56 h14 +0x200, Frame Rate
-Gui Add, CheckBox, x227 y69 w10 h12 gEnableForceRes vForceRes, CheckBox
-Gui Add, CheckBox, x289 y68 w10 h12 gEnableForceRate vForceRate, CheckBox
+Gui Add, GroupBox, x154 y10 w216 h82, File Input && Forced Options
+Gui Add, Button, x168 y28 w44 h43 gSelectSource, Source
+Gui Add, Edit, x223 y44 w63 h21 +Center vResolutionVar, 640x360
+Gui Add, Text, x228 y28 w56 h14 +0x200, Resolution
+Gui Add, Edit, x299 y44 w30 h21 +Center vFrameRateVar, 60
+Gui Add, Text, x289 y28 w56 h14 +0x200, Frame Rate
+Gui Add, CheckBox, x247 y69 w10 h12 gEnableForceRes vForceRes, CheckBox
+Gui Add, CheckBox, x309 y68 w10 h12 gEnableForceRate vForceRate, CheckBox
 
 Gui Add, ComboBox, x37 y184 w120 vMencoderCodecs Choose8, %CodecList%
 Gui Add, GroupBox, x17 y97 w168 h125, MEncoder Codecs
@@ -96,7 +108,7 @@ Gui Add, GroupBox, x17 y226 w168 h125, FFmpeg Codecs
 Gui Add, ComboBox, x39 y314 w120 vFFmpegCodecs, %FFEncoderList%
 
 Gui Add, GroupBox, x219 y97 w270 h253, Tomato Datamoshing
-Gui Add, ComboBox, x286 y170 w120 Choose6 vTomatoMode, irep|ikill|iswap|bloom|pulse|shuffle|overlapped|jiggle|reverse|invert
+Gui Add, ComboBox, x286 y170 w120 Choose7 vTomatoMode, irep|ikill|iswap|bloom|pulse|shuffle|overlapped|jiggle|reverse|invert
 Gui Add, Edit, x325 y217 w41 h21 vTomatoFrameCount +Center, 4
 Gui Add, Edit, x325 y264 w41 h21 vTomatoFramePosition +Center, 2
 Gui Add, Text, x314 y194 w62 h23 +0x200, Frame Count
@@ -118,6 +130,13 @@ Gui Add, Text, x66 y120 w71 h15 +0x200, Codec Options
 Gui Add, Edit, x38 y266 w120 h21 vFFmpegOptions, -bf 0 -g 999999 -an
 Gui Add, Text, x63 y250 w71 h15 +0x200, Codec Options
 
+Gui Add, Text, x63 y250 w71 h15, Codec Options
+Gui Add, GroupBox, x17 y10 w127 h83, Webcam Input
+Gui Add, ComboBox, x22 y28 w117 vWebCamName, %DeviceList%
+Gui Add, Button, x21 y55 w50 h31 gGetDevices, List Devices
+Gui Add, Button, x90 y55 w50 h31 gSelectWebcam, Use Device
+
+
 ;Disable some stuff by default.
 GuiControl, 1:Disable, FFmpegCodecs
 GuiControl, 1:Disable, FFmpegOptions
@@ -130,14 +149,73 @@ GuiControl, 1:Disable, TomatoRecycle
 GuiControl, 1:Disable, ResolutionVar
 GuiControl, 1:Disable, FrameRateVar
 GuiControl, 1:Disable, Recompress
+WebcamSource := ""
 
 ;Default Compressor.
 RecompressVar := "MEncoder"
 
-Gui Show, w504 h363, Datamosh Den - Ver 1.1
+Gui Show, w504 h363, Datamosh Den - Ver 1.3
+Return
+
+GetDevices:
+MakeList := ""
+DirtyList := ""
+msgbox,4096,,
+(
+Choose your webcam device name from this list.
+)
+gibdevice := "ffmpeg -f dshow -list_devices true -i null"
+List := ComObjCreate("WScript.Shell").Exec(gibdevice).StdErr.ReadAll()
+List.Visible := false
+
+text := List
+texts := StrSplit(text, "`n", "`r")
+for i, thisText in texts {
+  RegExMatch(thisText, "O)^\[(?:\w+)\s*@\s*(?:[[:xdigit:]]+)\]\s*""(.*?)""$", thisMatch)
+  MakeList .= "|" . thisMatch.Value(1)
+}
+
+DirtyList := StrReplace(MakeList, "||||", "|") ;Remove Duplicate "|" pipe bars.
+StringTrimLeft, DeviceList, DirtyList, 4 ;Remove Duplicate "|" pipe bars at beginning.
+DeviceList := StrReplace(DeviceList, "|||", "$") ;Split Video & Audio devices
+;Prune Audio Devices.
+Needle := "$"
+DeviceList := SubStr(DeviceList, 1, InStr(DeviceList, Needle)-1) . "|"
+
+GuiControl,, WebCamName, |%DeviceList%
+ ;GuiControl, Disable, ListWebcams
+GuiControl, Choose, WebCamName, 2
+ ;Control, ShowDropDown,, ComboBox2
+Return
+
+
+SelectWebcam:
+Gui, Submit, NoHide
+GuiControl, 1:Disable, FrameRateVar ;This fucks up the compression, unless the FPS you use matches one supported by the device.
+GuiControl, 1:, ForceRate, 0
+WebCam := " -f dshow -i video=" . chr(0x22) . WebCamName . chr(0x22) . " "
+WebcamCompression := "1"
+msgbox, %WebCamName% selected as input device.`n   Hit this button every time before "GO"`n       if you want to record a new video.
+Return
+
+WebCamCompression:
+;Gui, Submit, NoHide
+gosub, EnableForceRate
+gosub, EnableForceRes
+
+if (WebcamCompression = 1) {
+	FFWebcamCompress := cmd.exe /k "ffmpeg " . InputFrameRate . WebCam . ResolutionVar . FrameRate . " -f avi -c:v mjpeg -q:v 0 webcam-output.avi -y" ;last edit here
+	;msgbox, %FFWebcamCompress%
+	runwait, %FFWebcamCompress%	
+	SourceFile := "webcam-output.avi"
+	WebcamCompression := "0"
+	return
+	
+}
 Return
 
 SelectSource:
+WebcamCompression := "0"
 FileSelectFile, SourceFile,,,Select Source For Datamoshing......................................
 if errorlevel {
 	msgbox, You Didnt Select Anything lol
@@ -274,6 +352,8 @@ GuiControl, 1:Disable, Recompress
 
 RecompressVar := "MEncoder"
 config = ":compdata=dialog"
+
+gosub, WebCamCompression
 
 if (MencoderCodecs = "vp31vfw.dll") {
 	config = ""
@@ -457,8 +537,11 @@ GuiControl, 1:Disable, TomatoFramePosition
 GuiControl, 1:Disable, TomatoMOSHIT
 GuiControl, 1:Disable, TomatoRecycle
 
+
+
 RecompressVar := "FFmpeg"
 
+gosub, WebCamCompression
 gosub, EnableForceRate
 gosub, EnableForceRes
 
@@ -775,6 +858,7 @@ Return
 NoReBake:
 Gui, 3:Destroy
 Return
+
 
 
 GuiEscape:
