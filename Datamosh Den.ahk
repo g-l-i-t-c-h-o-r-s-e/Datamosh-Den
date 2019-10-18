@@ -51,9 +51,9 @@ loop
 {
 	;Clean up the non-glitching encoders from list, should be mostly done.	
 	count +=1
-	Strip := ["cavs|" , "a64_multi|" , "a64multi|" , "a64_multi5|" , "a64multi5|" , "alias_pix|" , "apng" , "avrp|" , "avui|" , "ayuv" , "bmp|" , "cljr" , "dpx" , "h264_nvenc" , "h264_qsv|" , "nvenc_hevc" , "hevc_nvenc|" , "hevc_qsv|" , "nvenc|" , "nvenc_h264|" , "huffyuv|" , "jpegls|" , "ljpeg|" , "mjpeg|" , "mpeg2_qsv|" , "pam|" , "pbm|" , "pcx|" , "pgm|" , "pgmyuv|" , "png|" , "ppm|" , "r10k|", "r210|" , "v210|" , "v308|" , "v310|" , "v408|" , "v410|" , "sgi|" , "sunrast|" , "targa|" , "tiff|" , "rv10|" , "rv20|" , "rawvideo" , "webp|" , "libwebp|" , "wrapped_avframe" , "xbm|" , "xface|" , "xwd|" , "y41p|" , "yuv4|"]	
+	Strip := ["cavs|" , "a64_multi|" , "a64multi|" , "a64_multi5|" , "a64multi5|" , "alias_pix|" , "apng|" , "avrp|" , "avui|" , "ayuv|" , "bmp|" , "cljr|" , "dpx|" , "h264_nvenc|" , "h264_qsv|" , "nvenc_hevc|" , "hevc_nvenc|" , "hevc_qsv|" , "nvenc|" , "nvenc_h264|" , "huffyuv|" , "jpegls|" , "ljpeg|" , "mjpeg|" , "mpeg2_qsv|" , "pam|" , "pbm|" , "pcx|" , "pgm|" , "pgmyuv|" , "png|" , "ppm|" , "r10k|", "r210|" , "v210|" , "v308|" , "v310|" , "v408|" , "v410|" , "sgi|" , "sunrast|" , "targa|" , "tiff|" , "rv10|" , "rv20|" , "rawvideo|" , "libwebp|" , "webp|" , "wrapped_avframe|" , "xbm|" , "xface|" , "xwd|" , "y41p|" , "yuv4|"]	
 	Kill := Strip.MaxIndex()
-	FFEncoderList := StrReplace(FFEncoderList, Strip[count],"", "All")
+	FFEncoderList := StrReplace(FFEncoderList, Strip[count],, "All")
 	if (count = Kill)  ; No more replacements needed.
 		break
 }
