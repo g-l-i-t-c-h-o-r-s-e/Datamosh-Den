@@ -195,7 +195,7 @@ GuiControl, 1:Disable, FrameRateVar ;This fucks up the compression, unless the F
 GuiControl, 1:, ForceRate, 0
 WebCam := " -f dshow -i video=" . chr(0x22) . WebCamName . chr(0x22) . " "
 WebcamCompression := "1"
-msgbox, %WebCamName% selected as input device.`n   Hit this button every time before "GO"`n       if you want to record a new video.
+msgbox, %WebCamName% selected as input device.`n   Hit this button every time before "GO"`n       if you want to record a new video.`n`n                 Press Q to stop Webcam.
 Return
 
 WebCamCompression:
