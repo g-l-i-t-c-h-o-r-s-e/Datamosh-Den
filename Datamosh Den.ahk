@@ -120,7 +120,7 @@ Gui Add, Button, x455 y109 w23 h23 gTomatoHalp, ?
 Gui Add, Radio, x165 y106 w16 h22 gEnableME vEnableMEncoderCodec Checked
 Gui Add, Radio, x167 y235 w16 h22 gEnableFF vEnableFFmpegCodec
 
-Gui Add, Button, x408 y288 w65 h46 vReCompress gReCompressMoshedOutput, Recompressmjpeg
+Gui Add, Button, x408 y288 w65 h46 vReCompress gReCompressMoshedOutput, Recompress
 Gui Add, Button, x235 y288 w48 h46 vTomatoRecycle gRecycleTomatoOutput, Remosh
 
 Gui Add, Button, x158 y183 w22 h23 vMEncoderCompression gMEncoderCompression, GO
