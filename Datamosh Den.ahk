@@ -154,7 +154,7 @@ WebcamSource := ""
 ;Default Compressor.
 RecompressVar := "MEncoder"
 
-Gui Show, w504 h363, Datamosh Den - Ver 1.3
+Gui Show, w504 h363, Datamosh Den - Ver 1.4
 Return
 
 VideoQualitySlider:
