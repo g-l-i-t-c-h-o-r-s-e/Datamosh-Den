@@ -39,6 +39,8 @@ You can grab a copy of it from [here.]( https://github.com/itsKaspar/tomato) Tha
 
 • Add Webcam input and device list [✔]
 
+• FFmpeg Video Quality Slider [✔]
+
 • Clean up FFmpeg Codecs List [✔]
 
 • AMV Watermark Cropping [✔]
