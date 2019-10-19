@@ -27,7 +27,7 @@ I included a build of MEncoder, MPlayer and more. The MPlayer devs at some point
 
 # Tomato also requires python version 2.7.16, [found here]( https://www.python.org/downloads/release/python-2716/)
 
-Tomato can be found [here.]( https://github.com/itsKaspar/tomato) Thank you Kaspar <333
+You can grab a copy of it from [here.]( https://github.com/itsKaspar/tomato) Thank you Kaspar <333
 
 # TODO
 
