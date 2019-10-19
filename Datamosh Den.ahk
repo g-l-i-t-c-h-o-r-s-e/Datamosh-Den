@@ -132,6 +132,7 @@ Gui Add, ComboBox, x22 y28 w117 vWebCamName, %DeviceList%
 Gui Add, Button, x21 y55 w50 h31 gGetDevices, List Devices
 Gui Add, Button, x90 y55 w50 h31 gSelectWebcam, Use Device
 
+Gui Add, Slider, x19 y289 w164 h18 Range0-1000 vVideoQuality gVideoQualitySlider AltSubmit, 10
 
 ;Disable some stuff by default.
 GuiControl, 1:Disable, FFmpegCodecs
@@ -152,6 +153,22 @@ RecompressVar := "MEncoder"
 
 Gui Show, w504 h363, Datamosh Den - Ver 1.3
 Return
+
+VideoQualitySlider:
+;Gui,Submit,NoHide
+int := VideoQuality/10
+fra := Mod(int, 10)
+fra := SubStr(fra, InStr(fra,".")+1, 1 )
+val :=  Floor(int) "." fra
+VideoQuality := val
+tooltip % VideoQuality
+SetTimer, RemoveToolTip1, 500
+return
+
+RemoveToolTip1:
+SetTimer, RemoveToolTip1, Off
+ToolTip
+return
 
 GetDevices:
 MakeList := ""
@@ -360,8 +377,8 @@ if (MencoderCodecs = "vp31vfw.dll") {
 gosub, EnableForceRate
 gosub, EnableForceRes
 
-if (MencoderCodecs = "Amv2Codec.dll") {
-	gosub, CustomAMV2Compression
+if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll") else if (MencoderCodecs = "Amv3Codec.dll") {
+	gosub, CustomAMVCompression
 	Return
 	;Configure dialog is broken for vp3.
 }
@@ -454,7 +471,7 @@ GuiControl, 1:Enable, TomatoFramePosition
 GuiControl, 1:Enable, TomatoMOSHIT
 Return
 
-CustomAMV2Compression:
+CustomAMVCompression:
 Gui, Submit, NoHide
 if (SourceFile = "") {
 	msgbox, Select Something Yo.
@@ -481,7 +498,7 @@ AMV2BufferWatermark3 := " -sws 4 -vf scale=3840:2160,expand=0:-330:0:0,scale=384
 gosub, EnableForceRate
 gosub, EnableForceRes
 
-msgbox, Testing Custom amv2 compression, removing watermark, etc.
+msgbox, Testing Custom AMV compression, removing watermark, etc.
 ;Select Preset for now.
 AMV2GUI()
 
@@ -540,13 +557,16 @@ RecompressVar := "FFmpeg"
 gosub, WebCamCompression
 gosub, EnableForceRate
 gosub, EnableForceRes
+gosub, VideoQualitySlider ; For some reason I had to place this here or else the VideoQuality var lost its decimal.
+;msgbox, %VideoQuality%
 
 if (SourceFile = "") {
 	msgbox, Select Something Yo.
 	return
 }
 
-FFCommand := cmd.exe /k "ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " " . FFmpegOptions . " output.avi -y"
+
+FFCommand := cmd.exe /k "ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VideoQuality . " " . FFmpegOptions . " output.avi -y"
   ;MsgBox, %FFCommand%
 
   ;Execute FFmpeg Here, also reads Standard Error Output.
@@ -601,7 +621,7 @@ if (ResolutionVar = " -vf scale=") {
 	return
 }
 
-FFCommand := cmd.exe /k "ffmpeg -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . " -f avi -strict -2 -c:v " . FFmpegCodecs . " " . FFmpegOptions . " output.avi -y"
+FFCommand := cmd.exe /k "ffmpeg -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VideoQuality . " " . FFmpegOptions . " output.avi -y"
    ;MsgBox, %FFCommand%
 
   ;Execute MEncoder Here, also reads Standard Error Output.
@@ -731,15 +751,15 @@ if (MencoderCodecs = "smv2.dll") {
 }
 
 ;Removes the watermark burnt into the video by AMV2
-if (MencoderCodecs = "Amv2Codec.dll") {
+if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll") else if (MencoderCodecs = "Amv3Codec.dll") {
 	;msgbox, Using Custom AMV2 Watermark Removal.
     ;Crops out the isolated watermark
 	AMV2RemoveWatermark1 := " -sws 4 -vf crop=640:300:0:60,scale=640:360"
-	AMV2RemoveWatermark2 := " -sws 4 -vf crop=1280:580:0:140,scale=1280:720"
-	AMV2RemoveWatermark3 := " -sws 4 -vf crop=3840:1860:0:290,scale=3840:2160"
-	
-	
-	if (Sel = 1) {
+AMV2RemoveWatermark2 := " -sws 4 -vf crop=1280:580:0:140,scale=1280:720"
+AMV2RemoveWatermark3 := " -sws 4 -vf crop=3840:1860:0:290,scale=3840:2160"
+
+
+if (Sel = 1) {
 		CustomCodecFix := AMV2RemoveWatermark1
 		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
 	}
@@ -807,7 +827,7 @@ if (RecompressVar = "FFmpeg") {
 
 if (RecompressVar = "AMV2") {
 	msgbox, Compressing the moshed file,`nwith the beta AMV2 Watermark removal!
-	gosub, CustomAMV2Compression
+	gosub, CustomAMVCompression
 	return
 }
 Return
