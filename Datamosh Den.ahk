@@ -478,7 +478,7 @@ if (SourceFile = "") {
 	return
 }
 
-RecompressVar := "AMV2"
+RecompressVar := "AMV"
 config = ":compdata=dialog"
 RecompressVar := "MEncoder"
 whichPreset := ""
@@ -755,11 +755,11 @@ if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll
 	;msgbox, Using Custom AMV2 Watermark Removal.
     ;Crops out the isolated watermark
 	AMV2RemoveWatermark1 := " -sws 4 -vf crop=640:300:0:60,scale=640:360"
-AMV2RemoveWatermark2 := " -sws 4 -vf crop=1280:580:0:140,scale=1280:720"
-AMV2RemoveWatermark3 := " -sws 4 -vf crop=3840:1860:0:290,scale=3840:2160"
+     AMV2RemoveWatermark2 := " -sws 4 -vf crop=1280:580:0:140,scale=1280:720"
+     AMV2RemoveWatermark3 := " -sws 4 -vf crop=3840:1860:0:290,scale=3840:2160"
 
 
-if (Sel = 1) {
+     if (Sel = 1) {
 		CustomCodecFix := AMV2RemoveWatermark1
 		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
 	}
@@ -825,7 +825,7 @@ if (RecompressVar = "FFmpeg") {
 	return
 }
 
-if (RecompressVar = "AMV2") {
+if (RecompressVar = "AMV") {
 	msgbox, Compressing the moshed file,`nwith the beta AMV2 Watermark removal!
 	gosub, CustomAMVCompression
 	return
