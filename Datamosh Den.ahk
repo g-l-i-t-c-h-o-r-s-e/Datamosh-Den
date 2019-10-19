@@ -125,6 +125,8 @@ Gui Add, Edit, x37 y136 w120 h21 vMEncoderOptions, -nosound
 Gui Add, Text, x66 y120 w71 h15 +0x200, Codec Options
 Gui Add, Edit, x38 y266 w120 h21 vFFmpegOptions, -bf 0 -g 999999 -an
 Gui Add, Text, x63 y250 w71 h15 +0x200, Codec Options
+Gui Add, Button, x158 y265 w22 h23 vFFGetOptions gListCodecOptions, ?
+
 
 Gui Add, Text, x63 y250 w71 h15, Codec Options
 Gui Add, GroupBox, x17 y10 w127 h83, Webcam Input
@@ -137,6 +139,7 @@ Gui Add, Slider, x19 y289 w164 h18 Range0-1000 vVideoQuality gVideoQualitySlider
 ;Disable some stuff by default.
 GuiControl, 1:Disable, FFmpegCodecs
 GuiControl, 1:Disable, FFmpegOptions
+GuiControl, 1:Disable, FFGetOptions
 GuiControl, 1:Disable, FFmpegCompression
 GuiControl, 1:Disable, TomatoMode
 GuiControl, 1:Disable, TomatoFrameCount
@@ -248,6 +251,7 @@ if (EnableMEncoderCodec = 1) {
 	GuiControl, 1:Disable, FFmpegCodecs
 	GuiControl, 1:Disable, FFmpegOptions
 	GuiControl, 1:Disable, FFmpegCompression
+	GuiControl, 1:Disable, FFGetOptions	
 	
 	GuiControl, 1:Disable, TomatoMode
 	GuiControl, 1:Disable, TomatoFrameCount
@@ -266,6 +270,7 @@ if (EnableFFmpegCodec = 1) {
 	GuiControl, 1:Enable, FFmpegCodecs
 	GuiControl, 1:Enable, FFmpegOptions
 	GuiControl, 1:Enable, FFmpegCompression
+	GuiControl, 1:Enable, FFGetOptions	
 	GuiControl, 1:Disable, MencoderCodecs
 	GuiControl, 1:Disable, MEncoderOptions
 	GuiControl, 1:Disable, RescaleMEncoderCodec
@@ -540,6 +545,13 @@ Sel := 4
 Return
 ;/AMV2 Watermark Removal Presets
 
+
+ListCodecOptions:
+Gui, Submit, NoHide
+msgbox, Here's the options you can use for the %FFmpegCodecs% codec.
+GetOptions := "ffmpeg -h encoder=" . FFmpegCodecs
+runwait, cmd.exe /k %GetOptions%
+Return
 
 ;wao now we got all the FFmpeg codecs too lol
 FFmpegCompression:
