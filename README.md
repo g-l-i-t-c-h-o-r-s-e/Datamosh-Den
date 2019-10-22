@@ -29,6 +29,8 @@ I included a build of MEncoder, MPlayer and more. The MPlayer devs at some point
 
 You can grab a copy of it from [here.]( https://github.com/itsKaspar/tomato) Thank you Kaspar <333
 
+# YOU NEED 7-ZIP INSTALLED FOR THE SCRIPT TO EXTRACT FFMPEG https://www.7-zip.org/
+
 # TODO
 
 • Auto-Download and Extract FFmpeg and the MPlayer version for HEVC [✔]
