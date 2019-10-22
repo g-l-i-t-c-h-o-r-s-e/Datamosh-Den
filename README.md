@@ -45,7 +45,7 @@ You can grab a copy of it from [here.]( https://github.com/itsKaspar/tomato) Tha
 
 • AMV Watermark Cropping [✔]
 
-• Fix HEVC/H265 decode [✔] (Almost done, so far only x265vfw.dll works for encoding).
+• Fix HEVC/H265 decode [✔] (Almost done, so far only x265vfw.dll with [these](https://i.imgur.com/f7R4bVN.png) settings; works for encoding).
 
 • Batch file input [✖]
 
