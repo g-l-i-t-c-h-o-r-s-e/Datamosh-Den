@@ -6,7 +6,6 @@
 SetWorkingDir %A_ScriptDir%
 SetBatchLines -1
 
-
 ;Populate FFmpeg Codecs List!!! Thank you so much Salz
 ;I couldn't have done the regex and object handling without u <3
 GibCodecs := "ffmpeg.exe -codecs"
@@ -81,7 +80,7 @@ AMV2GUI() {
 	Gui, 3:Add, Button, x46 y66 w35 h24 gAMV2Preset1280, 1280
 	Gui, 3:Add, Button, x82 y66 w35 h24 gOption4k, 4K
 	Gui, 3:Add, Button, x118 y66 w35 h24 Default gOptionNone, Nah
-	Gui, 3:Add, Text, x2 y-2 w162 h66, `n        Would ulike to Remove                       The Watermark? `n  (In case ur cheap like me and        don't wanna pay for this codec.)
+	Gui, 3:Add, Text, x2 y-2 w162 h66, `n        Would ulike to Remove                       The Watermark? `n  (In case ur cheap like me and        don't wanna pay for this codec.) ;yet
 	Gui, 3:Show, w162 h100,AMV2 Watermark Removal Hack
 	Gui, 3:-Sysmenu
 	WinWaitClose, AMV2 Watermark Removal Hack	
@@ -155,6 +154,10 @@ WebcamSource := ""
 RecompressVar := "MEncoder"
 
 Gui Show, w504 h363, Datamosh Den - Ver 1.4
+
+;Check if newer MEncoder package is in folder, if so extract it.
+#Include config/GetFFmpeg.ahk
+#Include config/unzip.ahk
 Return
 
 VideoQualitySlider:
@@ -756,6 +759,16 @@ GuiControlGet, MencoderCodecs
 CustomCodecFix := ""
 LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
 
+if (MencoderCodecs = "x265vfw.dll") {
+	
+	CustomCodecFix := ""
+	LemmeSeeIt := "cmd.exe /c new-mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
+	PNGBake := "new-mplayer " . CustomCodecFix . " output-moshed.avi -vo png:outdir=FRAMES -cache 1024"
+	MP4Bake := "new-mencoder " . CustomCodecFix . " output-moshed.avi -ovc x264 -x264encopts crf=1.0 -noskip -o ReBaked.mp4 -of lavf"
+	YUVBake := "new-mplayer " . CustomCodecFix . " -vo yuv4mpeg output-moshed.avi"	
+}
+
+
 if (MencoderCodecs = "smv2.dll") {
 	
 	CustomCodecFix := "-vc smv2Old"
@@ -848,8 +861,12 @@ PlsBakePNG:
 ;Dat image output tho
 Gui, 3:Destroy
 CheckItOut := "ffplay -i FRAMES/%08d.png -loop 0"
-ReBake := "mplayer " . CustomCodecFix . " output-moshed.avi -vo png:outdir=FRAMES -cache 1024"
-runwait, %ReBake%
+PNGBake := "mplayer " . CustomCodecFix . " output-moshed.avi -vo png:outdir=FRAMES -cache 1024"
+
+;Temporary fix for HEVC/H265 decoding.
+gosub, CustomCodecShit
+
+runwait, %PNGBake%
 sleep, 20
 WinWaitClose, cmd
 runwait, cmd.exe /c %CheckItOut%
@@ -862,8 +879,12 @@ PlsBakeMP4:
 ;I added noskip to make the output more smooth.
 Gui, 3:Destroy
 FileDelete, ReBaked.mp4
-ReBake := "mencoder " . CustomCodecFix . " output-moshed.avi -ovc x264 -x264encopts crf=1.0 -noskip -o ReBaked.mp4 -of lavf"
-runwait, %ReBake%
+MP4Bake := "mencoder " . CustomCodecFix . " output-moshed.avi -ovc x264 -x264encopts crf=1.0 -noskip -o ReBaked.mp4 -of lavf"
+
+;Temporary fix for HEVC/H265 decoding.
+gosub, CustomCodecShit
+
+runwait, %MP4Bake%
 sleep, 20
 WinWaitClose, cmd
 runwait, cmd.exe /c ffplay -i ReBaked.mp4 -loop 0
@@ -874,8 +895,12 @@ PlsBakeYUV:
 ;This Method reduces/elimanates duplicate/frozen frames, which also speeds up video.
 Gui, 3:Destroy
 FileDelete, ReBaked.yuv
-ReBake := "mplayer " . CustomCodecFix . " -vo yuv4mpeg output-moshed.avi"
-runwait, %ReBake%
+YUVBake := "mplayer " . CustomCodecFix . " -vo yuv4mpeg output-moshed.avi"
+
+;Temporary fix for HEVC/H265 decoding.
+gosub, CustomCodecShit
+
+runwait, %YUVBake%
 sleep, 20
 WinWaitClose, cmd
 FileMove, stream.yuv, ReBaked.yuv
