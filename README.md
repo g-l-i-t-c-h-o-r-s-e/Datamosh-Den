@@ -31,6 +31,8 @@ You can grab a copy of it from [here.]( https://github.com/itsKaspar/tomato) Tha
 
 # TODO
 
+• Auto-Download and Extract FFmpeg and the MPlayer version for HEVC [✔]
+
 • Segment video into multiple files and apply random Tomato settings to each one [✖]
 
 • Add Force Frame Rate(FPS) to RetryScale function [✔]
