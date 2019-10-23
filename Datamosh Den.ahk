@@ -111,6 +111,7 @@ Gui Add, Text, x309 y241 w71 h23 +0x200, Frame Position
 Gui Add, Text, x305 y147 w81 h23 +0x200, Datamosh Mode
 Gui Add, Button, x290 y288 w110 h46 vTomatoMOSHIT gCommenceTomatoDatamosh, DATAMOSH IT
 Gui Add, Button, x455 y109 w23 h23 gTomatoHalp, ?
+Gui Add, Button, x386 y61 w103 h30 gForcePythonLocation, Force Python Path
 
 Gui Add, Radio, x165 y106 w16 h22 gEnableME vEnableMEncoderCodec Checked
 Gui Add, Radio, x167 y235 w16 h22 gEnableFF vEnableFFmpegCodec
@@ -153,7 +154,7 @@ WebcamSource := ""
 ;Default Compressor.
 RecompressVar := "MEncoder"
 
-Gui Show, w504 h363, Datamosh Den - Ver 1.4
+Gui Show, w504 h363, Datamosh Den - Ver 1.6.2 (Debug`, sort of)
 
 ;Check if newer MEncoder package is in folder, if so extract it.
 #Include config/GetFFmpeg.ahk
@@ -802,13 +803,61 @@ if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll
 }
 Return
 
+
+
+TestPython:
+if (WeGotPython = 1) {
+	Return
+}
+
+regread, python, HKLM, SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\python.exe
+if (python = "") else if !RegExMatch(python,"(Python27)")  {
+	msgbox, Enter your Python27 Path/Folder.`n`nIts usually like "C:\Python27"
+	Gui 10:Add, Edit, x0 y8 w120 h21 vCustomPythonPath,
+	Gui 10:Add, Button, x0 y50 w120 h21 gSubmitPythonLocation, ok
+	Gui 10:-sysmenu	
+	Gui 10:Show, w120 h100, Paste le Path Here
+	WeGotPython := ""
+	WinWaitClose, Paste le Path Here
+	return
+	
+}
+
+If RegExMatch(python,"(Python27)")
+{
+	;msgbox, %python%`n`nits not empty
+	return
+}
+Return
+
+ForcePythonLocation:
+msgbox, Enter your Python27 Path/Folder.`n`nIts usually like "C:\Python27"
+Gui 10:Add, Edit, x0 y8 w120 h21 vCustomPythonPath,
+Gui 10:Add, Button, x0 y50 w120 h21 gSubmitPythonLocation, ok
+Gui 10:-sysmenu
+Gui 10:Show, w120 h100, Paste le Path Here
+WeGotPython := 1
+WinWaitClose, Paste le Path Here
+return
+
+SubmitPythonLocation:
+Gui, Submit, NoHide
+sleep, 50
+python := CustomPythonPath . "\python.exe" ;Adds python.exe to folder path.
+WeGotPython := 1
+Gui, 10:Destroy
+Return
+
+
+
 CommenceTomatoDatamosh:
 ;Destroy AVI Index via Tomato for Datamoshed Goodness!
 Gui, Submit, Nohide
 
 gosub, CustomCodecShit
+gosub, TestPython
 
-runwait, %ComSpec% /c python tomato.py -i output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed.avi
+runwait, %ComSpec% /k %python% tomato.py -i output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed.avi
 runwait, %LemmeSeeIt%
 ;open custom baking menu afterwards
 BakeGUI()
@@ -823,9 +872,10 @@ RecycleTomatoOutput:
 Gui, Submit, Nohide
 
 gosub, CustomCodecShit
+gosub, TestPython
 LemmeSeeIt := "mplayer " . CustomCodecFix . " output-moshed2.avi -loop 0"
 
-runwait, %ComSpec% /c python tomato.py -i output-moshed.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed2.avi
+runwait, %ComSpec% /k %python% tomato.py -i output-moshed.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed2.avi
 runwait, %LemmeSeeIt%
 ;Rename File back to original.
 FileDelete, output-moshed.avi
