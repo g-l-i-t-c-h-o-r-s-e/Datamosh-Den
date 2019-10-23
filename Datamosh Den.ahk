@@ -111,6 +111,7 @@ Gui Add, Text, x309 y241 w71 h23 +0x200, Frame Position
 Gui Add, Text, x305 y147 w81 h23 +0x200, Datamosh Mode
 Gui Add, Button, x290 y288 w110 h46 vTomatoMOSHIT gCommenceTomatoDatamosh, DATAMOSH IT
 Gui Add, Button, x455 y109 w23 h23 gTomatoHalp, ?
+Gui Add, Button, x386 y61 w103 h30 gForcePythonLocation, Force Python Path
 
 Gui Add, Radio, x165 y106 w16 h22 gEnableME vEnableMEncoderCodec Checked
 Gui Add, Radio, x167 y235 w16 h22 gEnableFF vEnableFFmpegCodec
@@ -153,7 +154,7 @@ WebcamSource := ""
 ;Default Compressor.
 RecompressVar := "MEncoder"
 
-Gui Show, w504 h363, Datamosh Den - Ver 1.6 (Debug`, sort of)
+Gui Show, w504 h363, Datamosh Den - Ver 1.6.2 (Debug`, sort of)
 
 ;Check if newer MEncoder package is in folder, if so extract it.
 #Include config/GetFFmpeg.ahk
@@ -810,13 +811,14 @@ if (WeGotPython = 1) {
 }
 
 regread, python, HKLM, SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\python.exe
-if (python = "") else if !RegExMatch(python,"(Python27)") {
+if (python = "") else if !RegExMatch(python,"(Python27)")  {
 	msgbox, Enter your Python27 Path/Folder.`n`nIts usually like "C:\Python27"
 	Gui 10:Add, Edit, x0 y8 w120 h21 vCustomPythonPath,
-	Gui 10:Add, Button, x0 y50 w120 h21 gSubmitPythonLocation,
-	Gui 10:Show, w120 h100, <3 <3 <3
+	Gui 10:Add, Button, x0 y50 w120 h21 gSubmitPythonLocation, ok
+	Gui 10:-sysmenu	
+	Gui 10:Show, w120 h100, Paste le Path Here
 	WeGotPython := ""
-	WinWaitClose, <3 <3 <3
+	WinWaitClose, Paste le Path Here
 	return
 	
 }
@@ -827,6 +829,16 @@ If RegExMatch(python,"(Python27)")
 	return
 }
 Return
+
+ForcePythonLocation:
+msgbox, Enter your Python27 Path/Folder.`n`nIts usually like "C:\Python27"
+Gui 10:Add, Edit, x0 y8 w120 h21 vCustomPythonPath,
+Gui 10:Add, Button, x0 y50 w120 h21 gSubmitPythonLocation, ok
+Gui 10:-sysmenu
+Gui 10:Show, w120 h100, Paste le Path Here
+WeGotPython := "1"
+WinWaitClose, Paste le Path Here
+return
 
 SubmitPythonLocation:
 Gui, Submit, NoHide
