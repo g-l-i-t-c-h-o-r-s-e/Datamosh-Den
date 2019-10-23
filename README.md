@@ -1,7 +1,8 @@
 
 # OwO 
 Ohey me again with another wacky script i conjured up in AutoHotkey Version 1.1.30.03 :b             
-Hopefully this will make Datamoshing more accesible to people on Windows who aren't familiar with the command line.
+Hopefully this will make Datamoshing more accesible to people on Windows who aren't familiar with the command line.                                
+If you're having issues try [this version](https://github.com/g-l-i-t-c-h-o-r-s-e/Datamosh-Den/tree/debug-test)
 
 ![img1](https://i.imgur.com/0KbQVn0.png)
 
