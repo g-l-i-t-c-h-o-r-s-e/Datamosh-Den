@@ -48,7 +48,6 @@ FileRemoveDir, %ExtractedPath%, 1
 
 ;open explorer after extracted in downloads folder.
 ;Run, explorer `"%ExtractedPath%`"
-Reload ; Restarts script after FFmpeg and newer MEncoder are done extracting.
 Return
 
 
@@ -88,14 +87,13 @@ sleep, 200
 FileRemoveDir,%OutNameNoExt%, 1
 sleep, 100
 FileDelete, %OutFileName%
-
 ;open explorer after extracted in downloads folder.
 ;Run, explorer `"%ExtractedPath%`"
 IfExist, ffmpeg.exe
 {
+	WinWaitClose, cmd.exe
 	gosub, unzipME
-     ;Reload
+     Reload ;Restarts script after FFmpeg and is done extracting.
 }
 else
-;Reload
 Return
