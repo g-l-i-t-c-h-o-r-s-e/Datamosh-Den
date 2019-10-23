@@ -1,5 +1,8 @@
 
 # MESSING AROUND WITH A NEW VERSION THAT AUTOMATICALLY DOWNLOADS, UNZIPS AND FINDS MOST OF THE FILES YOU NEED.
+You will still need to grab 7z.exe from https://www.7-zip.org/                               
+as well as Python 2.7.16   [found here](https://www.python.org/downloads/release/python-2716/)
+
 Ohey me again with another wacky script i conjured up in AutoHotkey Version 1.1.30.03 :b             
 Hopefully this will make Datamoshing more accesible to people on Windows who aren't familiar with the command line.
 
