@@ -1,5 +1,5 @@
 
-# OwO 
+# MESSING AROUND WITH A NEW VERSION THAT AUTOMATICALLY DOWNLOADS, UNZIPS AND FINDS MOST OF THE FILES YOU NEED.
 Ohey me again with another wacky script i conjured up in AutoHotkey Version 1.1.30.03 :b             
 Hopefully this will make Datamoshing more accesible to people on Windows who aren't familiar with the command line.
 
