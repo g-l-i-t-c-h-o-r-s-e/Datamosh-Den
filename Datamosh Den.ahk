@@ -810,7 +810,7 @@ if (WeGotPython = 1) {
 }
 
 regread, python, HKLM, SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\python.exe
-if (python = "") {
+if (python = "") else if !RegExMatch(python,"(Python27)") {
 	msgbox, Enter your Python27 Path/Folder.`n`nIts usually like "C:\Python27"
 	Gui 10:Add, Edit, x0 y8 w120 h21 vCustomPythonPath,
 	Gui 10:Add, Button, x0 y50 w120 h21 gSubmitPythonLocation,
@@ -845,7 +845,7 @@ Gui, Submit, Nohide
 gosub, CustomCodecShit
 gosub, TestPython
 
-runwait, %ComSpec% /k %python% tomato.py -i output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed.avi
+runwait, %ComSpec% /c %python% tomato.py -i output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed.avi
 runwait, %LemmeSeeIt%
 ;open custom baking menu afterwards
 BakeGUI()
@@ -863,7 +863,7 @@ gosub, CustomCodecShit
 gosub, TestPython
 LemmeSeeIt := "mplayer " . CustomCodecFix . " output-moshed2.avi -loop 0"
 
-runwait, %ComSpec% /k %python% tomato.py -i output-moshed.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed2.avi
+runwait, %ComSpec% /c %python% tomato.py -i output-moshed.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed2.avi
 runwait, %LemmeSeeIt%
 ;Rename File back to original.
 FileDelete, output-moshed.avi
