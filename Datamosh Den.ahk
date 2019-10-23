@@ -153,7 +153,7 @@ WebcamSource := ""
 ;Default Compressor.
 RecompressVar := "MEncoder"
 
-Gui Show, w504 h363, Datamosh Den - Ver 1.6 (Debug, sort of)
+Gui Show, w504 h363, Datamosh Den - Ver 1.6 (Debug`, sort of)
 
 ;Check if newer MEncoder package is in folder, if so extract it.
 #Include config/GetFFmpeg.ahk
