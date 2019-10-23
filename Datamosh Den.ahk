@@ -845,7 +845,7 @@ Gui, Submit, Nohide
 gosub, CustomCodecShit
 gosub, TestPython
 
-runwait, %ComSpec% /c %python% tomato.py -i output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed.avi
+runwait, %ComSpec% /k %python% tomato.py -i output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed.avi
 runwait, %LemmeSeeIt%
 ;open custom baking menu afterwards
 BakeGUI()
@@ -863,7 +863,7 @@ gosub, CustomCodecShit
 gosub, TestPython
 LemmeSeeIt := "mplayer " . CustomCodecFix . " output-moshed2.avi -loop 0"
 
-runwait, %ComSpec% /c %python% tomato.py -i output-moshed.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed2.avi
+runwait, %ComSpec% /k %python% tomato.py -i output-moshed.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% output-moshed2.avi
 runwait, %LemmeSeeIt%
 ;Rename File back to original.
 FileDelete, output-moshed.avi
