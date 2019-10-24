@@ -8,7 +8,7 @@ Read [the wiki](https://github.com/g-l-i-t-c-h-o-r-s-e/Datamosh-Den/wiki/Halp) i
 Ohey me again with another wacky script i conjured up in AutoHotkey Version 1.1.30.03 :b             
 Hopefully this will make Datamoshing more accesible to people on Windows who aren't familiar with the command line.
 
-![img1](https://i.imgur.com/QTiAvo8.png)
+![img1](https://i.imgur.com/SclZptR.png)
 
 # Features 
 • Quick video playback of the datamoshed avi
@@ -56,6 +56,6 @@ You can grab a copy of it from [here.]( https://github.com/itsKaspar/tomato) Tha
 
 • Fix HEVC/H265 decode [✔] (Almost done, so far only x265vfw.dll with [these](https://i.imgur.com/f7R4bVN.png) settings; works for encoding).
 
-• Batch file input [✖]
+• Batch file input [✔] (Almost done! It concats all the videos for now.)
 
 • More codecs [✖]
