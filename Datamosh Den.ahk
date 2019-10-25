@@ -369,7 +369,8 @@ Return
 MEncoderCompression:
 Gui, Submit, Nohide
 SplitPath, MencoderCodecs,,,, codecname,
-FileCreateDir, MEncoder-Output/%codecname%
+FileCreateDir, MEncoder-Output\%codecname%
+
 GuiControlGet, ForceRes
 GuiControl, 1:Disable, TomatoMode
 GuiControl, 1:Disable, TomatoFrameCount
@@ -571,7 +572,7 @@ Return
 ;wao now we got all the FFmpeg codecs too lol
 FFmpegCompression:
 Gui, Submit, Nohide
-FFOutputFolder := "FFmpeg-Output/" . FFmpegCodecs
+FFOutputFolder := "FFmpeg-Output\" . FFmpegCodecs
 FileCreateDir, %FFOutputFolder%
 if ErrorLevel {
 	msgbox, fucks
@@ -972,18 +973,18 @@ Return
 
 OutputLocation:
 if (RecompressVar = "FFmpeg") {
-	InputFolder := RecompressVar . "-Output/" . FFmpegCodecs
-	OutputFolder := RecompressVar . "-Output/" . FFmpegCodecs . "/Moshed"
+	InputFolder := RecompressVar . "-Output\" . FFmpegCodecs
+	OutputFolder := RecompressVar . "-Output\" . FFmpegCodecs . "\Moshed"
 	FileCreateDir, %OutputFolder%
-	msgbox, %OutputFolder%
+	;msgbox, %OutputFolder%
 }
 
 if (RecompressVar = "MEncoder") {
 	SplitPath, MencoderCodecs,,,, codecname,	
-	InputFolder := RecompressVar . "-Output/" . codecname
-	OutputFolder := RecompressVar . "-Output/" . codecname . "/Moshed"
+	InputFolder := RecompressVar . "-Output\" . codecname
+	OutputFolder := RecompressVar . "-Output\" . codecname . "\Moshed"
 	FileCreateDir, %OutputFolder%
-	msgbox, %OutputFolder%
+	;msgbox, %OutputFolder%
 }
 Return
 
@@ -1127,7 +1128,7 @@ Gui, 3:Destroy
 gosub, CustomCodecShit
 gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
 
-inputFile := "/output-moshed.avi "
+inputFile := "\output-moshed.avi "
 if (BatchBake = 1) {
 	inputFile := " " . ConcatString . " "
 	OutputFolder := ""
@@ -1153,7 +1154,7 @@ FileDelete, ReBaked.mp4
 gosub, CustomCodecShit ;Temporary fix for HEVC/H265 decoding.
 gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
 
-inputFile := "/output-moshed.avi "
+inputFile := "\output-moshed.avi "
 if (BatchBake = 1) {
 	inputFile := " " . ConcatString . " "
 	OutputFolder := ""
@@ -1181,14 +1182,14 @@ FileDelete, ReBaked.yuv
 gosub, CustomCodecShit
 gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
 
-inputFile := "/output-moshed.avi "
+inputFile := "\output-moshed.avi "
 if (BatchBake = 1) {
 	inputFile := " " . ConcatString . " "
 	OutputFolder := ""
 }
 
 YUVBake := "mplayer " . CustomCodecFix . " -vo yuv4mpeg " . OutputFolder . inputFile
-
+msgbox, %YUVBake%
 runwait, %YUVBake%
 sleep, 20
 WinWaitClose, cmd
