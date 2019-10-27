@@ -86,14 +86,19 @@ AMV2GUI() {
 	WinWaitClose, AMV2 Watermark Removal Hack	
 }
 
-Gui Add, GroupBox, x154 y10 w216 h82, File Input && Forced Options
-Gui Add, Button, x168 y28 w44 h43 gSelectSource, Source
-Gui Add, Edit, x223 y44 w63 h21 +Center vResolutionVar, 640x360
-Gui Add, Text, x228 y28 w56 h14 +0x200, Resolution
-Gui Add, Edit, x299 y44 w30 h21 +Center vFrameRateVar, 60
-Gui Add, Text, x289 y28 w56 h14 +0x200, Frame Rate
-Gui Add, CheckBox, x247 y69 w10 h12 gEnableForceRes vForceRes, CheckBox
-Gui Add, CheckBox, x309 y68 w10 h12 gEnableForceRate vForceRate, CheckBox
+Gui Add, GroupBox, x154 y10 w252 h83, File Input && Forced Options
+Gui Add, Button, x165 y34 w44 h43 gSelectSource, Source
+Gui Add, Edit, x285 y45 w63 h21 +Center vResolutionVar, 640x360
+Gui Add, Text, x291 y29 w49 h14 +0x200, Resolution
+Gui Add, Edit, x361 y45 w30 h21 +Center vFrameRateVar, 60
+Gui Add, Text, x366 y29 w22 h14 +0x200, FPS
+Gui Add, CheckBox, x311 y70 w10 h12 gEnableForceRes vForceRes, CheckBox
+Gui Add, CheckBox, x371 y70 w10 h12 gEnableForceRate vForceRate, CheckBox
+Gui Add, CheckBox, x237 y43 w10 h12 gBatchInputMessage vIsBatchInput, CheckBox
+Gui Add, Text, x216 y28 w55 h14, Batch Input
+;REVERSE VIDEO BEFORE DATAMOSH AND THEN BACK, COMING SOON.
+Gui Add, CheckBox, x237 y70 w10 h12 +Disabled, CheckBox
+Gui Add, Text, x222 y56 w47 h14 gEnableReverseVideo vIsReversed, Reverse?
 
 Gui Add, ComboBox, x37 y184 w120 vMencoderCodecs Choose8, %CodecList%
 Gui Add, GroupBox, x17 y97 w168 h125, MEncoder Codecs
@@ -111,10 +116,8 @@ Gui Add, Text, x309 y241 w71 h23 +0x200, Frame Position
 Gui Add, Text, x305 y147 w81 h23 +0x200, Datamosh Mode
 Gui Add, Button, x290 y288 w110 h46 vTomatoMOSHIT gCommenceTomatoDatamosh, DATAMOSH IT
 Gui Add, Button, x455 y109 w23 h23 gTomatoHalp, ?
-Gui Add, Button, x386 y61 w103 h30 gForcePythonLocation, Force Python Path
-Gui Add, Button, x397 y9 w80 h23 gBatchME, Batch MEn
-Gui Add, Button, x397 y35 w80 h23 gBatchFF, Batch FFm
 
+Gui Add, Button, x407 y63 w96 h30 gForcePythonLocation, Force Python Path
 
 Gui Add, Radio, x165 y106 w16 h22 gEnableME vEnableMEncoderCodec Checked
 Gui Add, Radio, x167 y235 w16 h22 gEnableFF vEnableFFmpegCodec
@@ -122,9 +125,9 @@ Gui Add, Radio, x167 y235 w16 h22 gEnableFF vEnableFFmpegCodec
 Gui Add, Button, x408 y288 w65 h46 vReCompress gReCompressMoshedOutput, Recompress
 Gui Add, Button, x235 y288 w48 h46 vTomatoRecycle gRecycleTomatoOutput, Remosh
 
-Gui Add, Button, x158 y183 w22 h23 vMEncoderCompression gMEncoderCompression, GO
-Gui Add, Button, x159 y313 w22 h23 vFFmpegCompression gFFmpegCompression, GO
-Gui Add, Edit, x37 y136 w120 h21 vMEncoderOptions, -nosound
+Gui Add, Button, x158 y183 w22 h23 vMEncoderCompression gPreMEncoderCompression, GO
+Gui Add, Button, x159 y313 w22 h23 vFFmpegCompression gPreFFmpegCompression, GO
+Gui Add, Edit, x37 y136 w120 h21 vMEncoderOptions, -nosound -noskip
 Gui Add, Text, x66 y120 w71 h15 +0x200, Codec Options
 Gui Add, Edit, x38 y266 w120 h21 vFFmpegOptions, -bf 0 -g 999999 -an
 Gui Add, Text, x63 y250 w71 h15 +0x200, Codec Options
@@ -157,13 +160,29 @@ isBatchFilename := 0
 
 ;Default Compressor.
 RecompressVar := "MEncoder"
+;Display help msg once once every startup.
+BatchInputHelpMsg := 1
 
-Gui Show, w504 h363, Datamosh Den - Ver 1.7.3 (Debug)
+Gui Show, w504 h363, Datamosh Den - Ver 1.7.8 (Debug)
 
 ;Check if newer MEncoder package is in folder, if so extract it.
 #Include config/GetFFmpeg.ahk
 #Include config/unzip.ahk
 Return
+
+BatchInputMessage:
+Gui, Submit, NoHide
+if (IsBatchInput = 1) && if (BatchInputHelpMsg = 1){
+     msgbox, ohey batch input is enabled!`nUse the Source button to select a folder...`n`nThen press GO.
+}
+
+if (IsBatchInput = 0) && if (BatchInputHelpMsg = 1) {
+	msgbox, ohey batch input is disabled!`nUse the source button to select a file...`n`nThen press GO.`nThis dialog won't bother you anymore.
+	BatchInputHelpMsg := 0 ;Turns off the help box until next startup.
+}
+
+Return
+
 
 VideoQualitySlider:
 ;Gui,Submit,NoHide
@@ -215,11 +234,11 @@ Return
 
 SelectWebcam:
 Gui, Submit, NoHide
-GuiControl, 1:Disable, FrameRateVar ;This fucks up the compression, unless the FPS you use matches one supported by the device.
-GuiControl, 1:, ForceRate, 0
-WebCam := " -f dshow -i video=" . chr(0x22) . WebCamName . chr(0x22) . " "
-WebcamCompression := "1"
-msgbox, %WebCamName% selected as input device.`n   Hit this button every time before "GO"`n       if you want to record a new video.`n`n                 Press Q to stop Webcam.
+  GuiControl, 1:Disable, FrameRateVar ;This fucks up the compression, unless the FPS you use matches one supported by the device.
+  GuiControl, 1:, ForceRate, 0
+   WebCam := " -f dshow -i video=" . chr(0x22) . WebCamName . chr(0x22) . " "
+   WebcamCompression := "1"
+  msgbox, %WebCamName% selected as input device.`n   Hit this button every time before "GO"`n       if you want to record a new video.`n`n                 Press Q to stop Webcam.
 Return
 
 WebCamCompression:
@@ -239,13 +258,24 @@ if (WebcamCompression = 1) {
 Return
 
 SelectSource:
+Gui, Submit, NoHide
 WebcamCompression := "0"
+
+if (IsBatchInput = 1) {
+FileCreateDir, %A_ScriptDir%\Batch-Output
+FileSelectFolder,leFolder, *%A_ScriptDir%,3,Select The Input Folder.....................
+if errorlevel {
+	msgbox, You Didnt Select Anything lol
+	return
+ }
+}
+else
 FileSelectFile, SourceFile,,,Select Source For Datamoshing......................................
 if errorlevel {
 	msgbox, You Didnt Select Anything lol
 	return
 }
-
+Return
 
 
 EnableME:
@@ -366,6 +396,21 @@ Return
 ;WIP
 
 
+EnableReverseVideo:
+Return
+
+PreMEncoderCompression:
+if (IsBatchInput = 0) {
+	goto, MEncoderCompression
+	Return
+}
+
+if (IsBatchInput = 1) {
+	goto, BatchME
+	Return
+}
+Return
+
 MEncoderCompression:
 Gui, Submit, Nohide
 SplitPath, MencoderCodecs,,,, codecname,
@@ -403,7 +448,9 @@ if (SourceFile = "") {
 
 if (isBatchFilename = 1) { ; This is where the Batch output stuff happens.
 	fileVal +=1
-	OutputFilename := "./BatchOutput/output_" . fileVal . ".avi"	
+	Pack := "0000"
+	zeropad := (SubStr(Pack, 1, StrLen(Pack) - StrLen(fileVal)) . fileVal) ;ZeroPadding for filenames
+	OutputFilename := "./Batch-Output/output_" . zeropad . ".avi"	
 }
 
 MECommand := cmd.exe /k "mencoder " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
@@ -567,17 +614,27 @@ GetOptions := "ffmpeg -h encoder=" . FFmpegCodecs
 runwait, cmd.exe /k %GetOptions%
 Return
 
+PreFFmpegCompression:
+if (IsBatchInput = 0) {
+	goto, FFmpegCompression
+	Return
+}
 
+if (IsBatchInput = 1) {
+	goto, BatchFF
+	Return
+}
+Return
 
 ;wao now we got all the FFmpeg codecs too lol
 FFmpegCompression:
 Gui, Submit, Nohide
+
 FFOutputFolder := "FFmpeg-Output\" . FFmpegCodecs
 FileCreateDir, %FFOutputFolder%
 if ErrorLevel {
-	msgbox, fucks
+	msgbox, fuck idk why that happened, PM me?
 }
-
 
 GuiControl, 1:Disable, TomatoMode
 GuiControl, 1:Disable, TomatoFrameCount
@@ -602,7 +659,9 @@ if (SourceFile = "") {
 
 if (isBatchFilename = 1) {
 	fileVal +=1
-	OutputFilename := "./BatchOutput/output_" . fileVal . ".avi"
+	Pack := "0000"
+	zeropad := (SubStr(Pack, 1, StrLen(Pack) - StrLen(fileVal)) . fileVal) ;ZeroPadding for filenames.
+	OutputFilename := "./Batch-Output/output_" . zeropad . ".avi"
 }
 
 
@@ -651,10 +710,6 @@ TryRes +=1
 ResArray := ["16:16", "352:288" , "120:90" , "128:128" , "256:256" , "320:200" , "320:240" , "400:240" , "480:576" , "500:500" , "512:256" , "640:320" , "640:360" , "640:480" , "720:480" , "1280:720" , "1366:768" , "1440:1080" , "1920:1080" , "3840:2160" , "7680:4320" , "15360:8640"]
 ResolutionVar := " -vf scale=" . ResArray[TryRes]
 
-;if (MencoderCodecs = "smv2.dll") {
-;	config := ":compdata=dialog "
-;	;Forces Compression Dialog on ReScale, since this codec NEEDS it in order to compress lolol.
-;}
 
 if (ResolutionVar = " -vf scale=") {
 	msgbox, WTF NOTHING WORKED?!? Sorry.
@@ -756,13 +811,13 @@ return
 
 
 BatchME:
-Gui, Submit, NoHide
-FileCreateDir, %A_ScriptDir%\BatchOutput
-FileSelectFolder,leFolder, *%A_ScriptDir%,3,Select The Input Folder.....................
-if errorlevel {
-	msgbox, You Didnt Select Anything lol
-	return
-}  
+;Gui, Submit, NoHide
+FileCreateDir, %A_ScriptDir%\Batch-Output
+;FileSelectFolder,leFolder, *%A_ScriptDir%,3,Select The Input Folder.....................
+;if errorlevel {
+;	msgbox, You Didnt Select Anything lol
+;	return
+;}  
 
 extensions := "mp4,webm,avi,mkv,yuv"
 
@@ -777,7 +832,7 @@ Loop,%leFolder%\*
 
 Loop,%leFolder%\*
 {
-	global TargetFiles = A_LoopFileFullPath
+	TargetFiles := A_LoopFileFullPath
 	SplitPath, TargetFiles, name, dir, ext, name_no_ext,
 	if A_LoopFileExt in %extensions%
 	{
@@ -792,6 +847,7 @@ Loop,%leFolder%\*
 		isBatchFilename := 0
 		countfiles := 0
 		fileVal := 0
+		zeropad := ""
 		gosub, CommenceBatchTomatoDatamosh
 		break
 	}
@@ -802,13 +858,13 @@ if ErrorLevel {
 return
 
 BatchFF:
-Gui, Submit, NoHide
-FileCreateDir, %A_ScriptDir%\BatchOutput
-FileSelectFolder,leFolder, *%A_ScriptDir%,3,Select The Input Folder.....................
-if errorlevel {
-	msgbox, You Didnt Select Anything lol
-	return
-}  
+;Gui, Submit, NoHide
+FileCreateDir, %A_ScriptDir%\Batch-Output
+;FileSelectFolder,leFolder, *%A_ScriptDir%,3,Select The Input Folder.....................
+;if errorlevel {
+;	msgbox, You Didnt Select Anything lol
+;	return
+;}  
 
 extensions := "mp4,webm,avi,mkv,yuv"
 
@@ -825,7 +881,7 @@ Loop,%leFolder%\*
 
 Loop,%leFolder%\*
 {
-	global TargetFiles = A_LoopFileFullPath
+	TargetFiles := A_LoopFileFullPath
 	SplitPath, TargetFiles, name, dir, ext, name_no_ext,
 	if A_LoopFileExt in %extensions%
 	{
@@ -840,6 +896,7 @@ Loop,%leFolder%\*
 		isBatchFilename := 0
 		countfiles := 0
 		fileVal := 0
+		zeropad := ""
 		gosub, CommenceBatchTomatoDatamosh
 		break
 	}
@@ -861,7 +918,7 @@ if (MencoderCodecs = "x265vfw.dll") {
 	CustomCodecFix := ""
 	LemmeSeeIt := "cmd.exe /c new-mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
 	PNGBake := "new-mplayer " . CustomCodecFix . " output-moshed.avi -vo png:outdir=FRAMES -cache 1024"
-	MP4Bake := "new-mencoder " . CustomCodecFix . " output-moshed.avi -ovc x264 -x264encopts crf=1.0 -noskip -o ReBaked.mp4 -of lavf"
+	MP4Bake := "new-mencoder " . CustomCodecFix . " output-moshed.avi -ovc x264 -x264encopts crf=1.0 " . MEncoderOptions " -o ImBaked.mp4 -of lavf"
 	YUVBake := "new-mplayer " . CustomCodecFix . " -vo yuv4mpeg output-moshed.avi"	
 }
 
@@ -986,6 +1043,22 @@ if (RecompressVar = "MEncoder") {
 	FileCreateDir, %OutputFolder%
 	;msgbox, %OutputFolder%
 }
+
+if (RecompressVar = "FFmpeg") && if (isBatchInput = 1) {
+	InputFolder := "Batch-Output\" . FFmpegCodecs
+	OutputFolder := "Batch-Output-Moshed\" . FFmpegCodecs
+	FileCreateDir, %OutputFolder%
+	;msgbox, %OutputFolder%
+}
+
+if (RecompressVar = "MEncoder") && if (isBatchInput = 1) {
+	SplitPath, MencoderCodecs,,,, codecname,	
+	InputFolder := "Batch-Output\" . codecname
+	OutputFolder := "Batch-Output-Moshed\" . codecname
+	FileCreateDir, %OutputFolder%
+	;msgbox, %OutputFolder%
+}
+
 Return
 
 
@@ -1000,7 +1073,7 @@ gosub, OutputLocation
 
 LemmeSeeIt := "mplayer " . CustomCodecFix . " " . OutputFolder . "/output-moshed.avi -loop 0"
 
-runwait, %ComSpec% /k %python% tomato.py -i %InputFolder%/output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed.avi
+runwait, %ComSpec% /c %python% tomato.py -i %InputFolder%/output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed.avi
 runwait, %LemmeSeeIt%
 ;open custom baking menu afterwards
 BakeGUI()
@@ -1010,6 +1083,7 @@ GuiControl, 1:Enable, Recompress
 Return
 
 RecycleTomatoOutput:
+;This is the ReMosh button.
 ;Destroy AVI Index of the Previous file via Tomato for even more Datamoshed Goodness!!!
 Gui, Submit, Nohide
 
@@ -1019,7 +1093,7 @@ gosub, OutputLocation
 
 LemmeSeeIt := "mplayer " . CustomCodecFix . " " . OutputFolder . "/output-moshed2.avi -loop 0"
 
-runwait, %ComSpec% /k %python% tomato.py -i ./%OutputFolder%/output-moshed.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed2.avi
+runwait, %ComSpec% /c %python% tomato.py -i ./%OutputFolder%/output-moshed.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed2.avi
 runwait, %LemmeSeeIt%
 ;Rename File back to original.
 FileDelete, %OutputFolder%/output-moshed.avi
@@ -1032,25 +1106,31 @@ CommenceBatchTomatoDatamosh:
 ;Destroy AVI Index via Tomato for Datamoshed Goodness!
 ;Currently uses the selected Datamosh settings in the GUI, gonna add an option to use an array soon.
 Gui, Submit, NoHide
-FileCreateDir, BatchOutput-Moshed
+FileRemoveDir, Batch-Output-Moshed
+sleep, 300
+FileRemoveDir, Batch-Output
+sleep, 300
+FileCreateDir, Batch-Output-Moshed
 
-Loop,%A_ScriptDir%\BatchOutput\*.avi
+Loop,%A_ScriptDir%\Batch-Output\*.avi
 {
 	If RegExMatch(A_LoopFileExt,"(avi)")
 		countfiles += 1
 	stoploop := countfiles
 }
 
-Loop,%A_ScriptDir%\BatchOutput\*.avi
+Loop,%A_ScriptDir%\Batch-Output\*.avi
 {
-	global TargetFiles = A_LoopFileFullPath
+	TargetFiles := A_LoopFileFullPath
 	SplitPath, TargetFiles, name, dir, ext, name_no_ext,
 	If RegExMatch(A_LoopFileExt,"(avi)")
 	{
 		sourceFile := TargetFiles
 		isBatchFilename := 1
 		fileVal +=1
-		FileLocation :=  " ./BatchOutput-Moshed/output" . fileVal . "-moshed.avi"
+		Pack := "0000"
+		zeropad := (SubStr(Pack, 1, StrLen(Pack) - StrLen(fileVal)) . fileVal) ;ZeroPadding for filenames.
+		FileLocation :=  " ./Batch-Output-Moshed/moshed_" . zeropad . ".avi"
 		
 		gosub, CustomCodecShit
 		gosub, TestPython
@@ -1063,9 +1143,10 @@ Loop,%A_ScriptDir%\BatchOutput\*.avi
 		isBatchFilename := 0
 		countfiles := 0
 		fileVal := 0
+		zeropad := ""
 		
 		;Now we gotta count and get the names of the moshed avi files.
-		Loop,%A_ScriptDir%\BatchOutput-Moshed\*.avi
+		Loop,%A_ScriptDir%\Batch-Output-Moshed\*.avi
 		{
 			If RegExMatch(A_LoopFileExt,"(avi)")
 				countfiles += 1
@@ -1097,7 +1178,7 @@ Loop,%A_ScriptDir%\BatchOutput\*.avi
 Return
 
 ReCompressMoshedOutput:
-SourceFile := "output-moshed.avi"
+SourceFile := OutputFolder . "\output-moshed.avi"
 
 if (RecompressVar = "MEncoder") {
 	msgbox, Compressing the moshed file,`nwith the current MEncoder vfw codec selected!
@@ -1119,37 +1200,23 @@ if (RecompressVar = "AMV") {
 Return
 
 
-
 PlsBakePNG:
-;Dat image output tho
 Gui, 3:Destroy
 
-;Temporary fix for HEVC/H265 decoding.
-gosub, CustomCodecShit
-gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
-
-inputFile := "\output-moshed.avi "
-if (BatchBake = 1) {
-	inputFile := " " . ConcatString . " "
-	OutputFolder := ""
+if (RecompressVar = "FFmpeg") {
+	whichCodec := FFmpegCodecs . "-FRAMES"
 }
 
-CheckItOut := "ffplay -i FRAMES/%08d.png -loop 0"
-PNGBake := "mplayer -vo png:outdir=FRAMES -cache 1024 " . CustomCodecFix . OutputFolder . inputFile
+if (RecompressVar = "MEncoder") {
+	SplitPath, MencoderCodecs,,,, codecname,	
+	whichCodec := "" . codecname . "-FRAMES"
+}
 
-runwait, %PNGBake%
-sleep, 20
-WinWaitClose, cmd
-runwait, cmd.exe /c %CheckItOut%
-FileDelete, output-moshed.avi
-run, %A_ScriptDir%/FRAMES
-Return
+DirName := "PNG-Output"
 
-PlsBakeMP4:
-;Usually works, if not then select the YUV option and convert that to mp4 with FFmpeg yourself.
-;I added noskip to make the output more smooth.
-Gui, 3:Destroy
-FileDelete, ReBaked.mp4
+FileRemoveDir, %DirName%\%whichCodec%, 1 ;Delete the folder first every time, to avoid conflicting frames from previous video.
+sleep, 50
+FileCreateDir, %DirName%
 
 gosub, CustomCodecShit ;Temporary fix for HEVC/H265 decoding.
 gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
@@ -1160,14 +1227,45 @@ if (BatchBake = 1) {
 	OutputFolder := ""
 }
 
-MP4Bake := "mencoder " . CustomCodecFix . " " . OutputFolder . inputFile " -ovc x264 -x264encopts crf=1.0 -noskip -o ReBaked.mp4 -of lavf"
-msgbox, %MP4Bake%
+
+CheckItOut := "ffplay -i " . DirName . "\" . whichCodec . "\%08d.png -loop 0"
+PNGBake := "mplayer -vo png:outdir=PNG-Output\" . whichCodec . " -cache 1024 " . CustomCodecFix . OutputFolder . inputFile
+
+runwait, %PNGBake%
+sleep, 20
+WinWaitClose, cmd
+
+runwait, cmd.exe /c %CheckItOut%
+;FileDelete, %OutputFolder%\output-moshed.avi
+
+run, %A_ScriptDir%\%DirName%\%whichCodec%
+Return
+
+PlsBakeMP4:
+;Usually works, if not then select the YUV option and convert that to mp4 with FFmpeg yourself.
+;I originally added noskip by default to make the output more smooth, but this is optional via the GUI now.
+Gui, 3:Destroy
+FileDelete, ImBaked.mp4
+
+gosub, CustomCodecShit ;Temporary fix for HEVC/H265 decoding.
+gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
+
+inputFile := "\output-moshed.avi "
+if (BatchBake = 1) {
+	inputFile := " " . ConcatString . " "
+	BakedOutputFolder := OutputFolder
+	OutputFolder := ""
+}
+
+MP4Bake := "mencoder " . CustomCodecFix . " " . OutputFolder . inputFile " -ovc x264 -x264encopts crf=1.0 " . MEncoderOptions " -o " . OutputFolder . BakedOutputFolder . "\ImBaked.mp4 -of lavf"
+;msgbox, %MP4Bake%
 
 runwait, %MP4Bake%
 sleep, 20
 WinWaitClose, cmd
-runwait, cmd.exe /c ffplay -i ReBaked.mp4 -loop 0
-FileDelete, output-moshed.avi
+LetseeIt := "cmd.exe /c ffplay -i " . OutputFolder . BakedOutputFolder . "\ImBaked.mp4 -loop 0"
+runwait, %LetseeIt%
+;FileDelete, %OutputFolder%\output-moshed.avi
 
 ;Clear the concat string.
 ConcatString := ""
@@ -1175,8 +1273,10 @@ Return
 
 PlsBakeYUV:
 ;This Method reduces/elimanates duplicate/frozen frames, which also speeds up video.
+;Currently doesn't work for batch file input, as MPlayer overwrites the output stream.yuv with each video.
+;Gonna have to concatenate them all at some point.
 Gui, 3:Destroy
-FileDelete, ReBaked.yuv
+FileDelete, %OutputFolder%\ImBaked.yuv
 
 ;Temporary fix for HEVC/H265 decoding.
 gosub, CustomCodecShit
@@ -1193,31 +1293,11 @@ msgbox, %YUVBake%
 runwait, %YUVBake%
 sleep, 20
 WinWaitClose, cmd
-FileMove, stream.yuv, ReBaked.yuv
-runwait, cmd.exe /c ffplay -i ReBaked.yuv -loop 0
-FileDelete, output-moshed.avi
+FileMove, stream.yuv,  %OutputFolder%\ImBaked.yuv
+runwait, cmd.exe /c ffplay -i  %OutputFolder%\ImBaked.yuv -loop 0
+;FileDelete, %OutputFolder%\output-moshed.avi
 Return
 
-
-;Might remove soon idk. Not being used rn.
-PlsBakeMP4Batch:
-;Usually works, if not then select the YUV option and convert that to mp4 with FFmpeg yourself.
-;I added -noskip to make the output more smooth.
-msgbox, %isBatchFilename% 
-Gui, 3:Destroy
-FileDelete, ReBaked.mp4
-;ConcatString := StrReplace(ConcatString, "`r`n", "") ;This is needed for it to work, removes line break.
-MP4Bake := ComSpec . " /k " . "mencoder " . CustomCodecFix . " " . ConcatString . " -ovc x264 -x264encopts crf=1.0 -noskip -o ReBaked.mp4 -of lavf"
-msgbox, %MP4Bake%
-;Temporary fix for HEVC/H265 decoding.
-gosub, CustomCodecShit
-
-runwait, %MP4Bake%
-sleep, 20
-WinWaitClose, cmd
-runwait, cmd.exe /c ffplay -i ReBaked.mp4 -loop 0
-FileDelete, output-moshed.avi
-Return
 
 NoReBake:
 Gui, 3:Destroy
