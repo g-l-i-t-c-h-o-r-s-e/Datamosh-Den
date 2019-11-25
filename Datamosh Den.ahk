@@ -1,81 +1,30 @@
 ;Datamosh ToolKit AHk Edition
 ;Joining the powers of FFmpeg, MEncoder and Tomato into one <3
-;Thrown together by yours Truly
+;Thrown together by yours Truly, Pandela
 #SingleInstance Force
 #NoEnv
 SetWorkingDir %A_ScriptDir%
 SetBatchLines -1
 
-;Populate FFmpeg Codecs List!!! Thank you so much Salz
-;I couldn't have done the regex and object handling without u <3
-GibCodecs := "ffmpeg.exe -codecs"
-List := ComObjCreate("WScript.Shell").Exec(GibCodecs).StdOut.ReadAll()
-text := List
-texts := StrSplit(text, "`n", "`r")
-
-decoders := array()
-encoders := array()
-
-for i, thisText in texts {
-	RegExMatch(thisText, "O)^\h*((?:(?<decodes>D)|\.)(?:(?<encodes>E)|\.)(?:(?<video>V)|(?<audio>A)|(?<subtitles>S)|\.)(?:(?<intraframe>I)|\.)(?:(?<lossy>L)|\.)(?:(?<lossless>S)|\.))\h+(?<name>\w+)\h+(?<description>(?:(?:\(\h*decoders\h*:\h*(?<decoders>(?:\h*[\w-]+)+)\h*\))|(?:\(\h*encoders\h*:\h*(?<encoders>(?:\h*[\w-]+)+)\h*\))|.)+)$", thisMatch)
-	if (thisMatch.encodes) {
-		encoders.push(thisMatch.name)
-		if (thisMatch.encoders)
-			for i, name in strSplit(thisMatch.encoders, A_Space)
-				encoders.push(name)
-	}
-}
-Loop, % encoders.Length() {
-	FFEncoderList .= encoders[A_Index] . "|"
-}
-;;;;;;Omited Decoder List;;;;;;
-;
-;  if (thisMatch.decodes) {
-;    decoders.push(thisMatch.name)
-;    if (thisMatch.decoders)
-;      for i, name in strSplit(thisMatch.decoders, A_Space)
-;        decoders.push(name)
-;  }
-;
-;Loop, % decoders.Length() {
-;	FFDecoderList .= decoders[A_Index] . "|"
-;}
-;;;;;;Omited Decoder List;;;;;;
-
-;Purge audio and subtitle codecs from Video Encoder list!!!
-Needle := "aac"
-FFEncoderList := SubStr(FFEncoderList, 1, InStr(FFEncoderList, Needle)-1) . "|"
-
-;Strip non-glitching codecs from the FFmpeg video codec list, mostly done.
-Strip := ["amv|" , "asv1|" , "asv2|" , "cavs|" , "a64_multi|" , "a64multi|" , "a64_multi5|" , "a64multi5|" , "alias_pix|" , "apng|" , "avrp|" , "avui|" , "ayuv|" , "bmp|" , "cljr|" , "dpx|" , "h264_nvenc|" , "h264_qsv|" , "nvenc_hevc|" , "hevc_nvenc|" , "hevc_qsv|" , "nvenc|" , "nvenc_h264|" , "huffyuv|" , "jpegls|" , "ljpeg|" , "mjpeg|" , "mpeg2_qsv|" , "pam|" , "pbm|" , "pcx|" , "pgm|" , "pgmyuv|" , "png|" , "ppm|" , "r10k|", "r210|" , "v210|" , "v308|" , "v310|" , "v408|" , "v410|" , "sgi|" , "sunrast|" , "targa|" , "tiff|" , "rv10|" , "rv20|" , "rawvideo|" , "libwebp|" , "webp|" , "wrapped_avframe|" , "xbm|" , "xface|" , "xwd|" , "y41p|" , "yuv4|"]
-for _, val in Strip {
-	FFEncoderList := StrReplace(FFEncoderList, val)
-}
-
-;Populate MEncoder Codecs list.
-codecs := A_ScriptDir . "/codecs/*.dll"
-loop, files, %codecs%
-{
-	CodecList .= A_LoopFileName  . "|"
-	CodecList := StrReplace(CodecList, "msvcr70.dll")
-}
-
+#Include config/GetCodecs.ahk ; Populate the MEncoder and FFmpeg Codec lists!!! <3
 
 ;Custom GUI for baking yo files.
 BakeGUI() {
 	WinWaitClose, cmd
+	Gui, 3:Color, DDCEE9	
 	Gui, 3:Add, Button, x10 y66 w35 h24 gPlsBakeYUV, YUV
 	Gui, 3:Add, Button, x46 y66 w35 h24 gPlsBakeMP4, MP4
 	Gui, 3:Add, Button, x82 y66 w35 h24 gPlsBakePNG, PNG
 	Gui, 3:Add, Button, x118 y66 w35 h24 Default gNoReBake, Nah
-	Gui, 3:Add, Text, x2 y2 w162 h63, `n      Would ulike to ReBake? `n(Makes the Video compatible with       FFmpeg, and maybe larger.)
-	Gui, 3:Show, w162 h100,Shall We Bake Some More???
+	Gui, 3:Add, Text, x2 y2 w162 h63, `n      Would ulike to get Baked? `n(Makes the Video compatible with       FFmpeg, and maybe larger.)
+	Gui, 3:Show, w162 h100,To Bake`, or Not To Bake?
 	Gui, 3:-Sysmenu
-	WinWaitClose, Shall We Bake Some More???	
+	WinWaitClose, To Bake`, or Not To Bake?
 }
 
 AMV2GUI() {
 	WinWaitClose, cmd
+	Gui, 3:Color, DDCEE9	
 	Gui, 3:Add, Button, x10 y66 w35 h24 gAMV2Preset640, 640
 	Gui, 3:Add, Button, x46 y66 w35 h24 gAMV2Preset1280, 1280
 	Gui, 3:Add, Button, x82 y66 w35 h24 gOption4k, 4K
@@ -86,67 +35,82 @@ AMV2GUI() {
 	WinWaitClose, AMV2 Watermark Removal Hack	
 }
 
-Gui Add, GroupBox, x154 y10 w252 h83, File Input && Forced Options
+;Input, Forced Options and Extra Filter GUI Stuff
+Gui, Color, DDCEE9
+pic := A_ScriptDir . "\config\Background.png"
+Gui, Add, Pic, x0 y0 w486 h363 vBack, %pic%
+;I HAD TO PLACE THE GUI PIC BACKGROUND PLACEMENT HERE TO MAKE IT WORK!!!
+Gui Add, GroupBox, x154 y10 w314 h83 ,
 Gui Add, Button, x165 y34 w44 h43 gSelectSource, Source
 Gui Add, Edit, x285 y45 w63 h21 +Center vResolutionVar, 640x360
-Gui Add, Text, x291 y29 w49 h14 +0x200, Resolution
+Gui Add, Text, x291 y29 w49 h14 +0x200 +BackgroundTrans, Resolution
 Gui Add, Edit, x361 y45 w30 h21 +Center vFrameRateVar, 60
-Gui Add, Text, x366 y29 w22 h14 +0x200, FPS
+Gui Add, Text, x366 y29 w22 h14 +0x200 +BackgroundTrans, FPS
 Gui Add, CheckBox, x311 y70 w10 h12 gEnableForceRes vForceRes, CheckBox
 Gui Add, CheckBox, x371 y70 w10 h12 gEnableForceRate vForceRate, CheckBox
 Gui Add, CheckBox, x237 y43 w10 h12 gBatchInputMessage vIsBatchInput, CheckBox
-Gui Add, Text, x216 y28 w55 h14, Batch Input
-;REVERSE VIDEO BEFORE DATAMOSH AND THEN BACK, COMING SOON.
-Gui Add, CheckBox, x237 y70 w10 h12 +Disabled, CheckBox
-Gui Add, Text, x222 y56 w47 h14 gEnableReverseVideo vIsReversed, Reverse?
+Gui Add, Text, x216 y28 w55 h14 +BackgroundTrans, Batch Input
+Gui Add, CheckBox, x237 y70 w10 h12 gEnableOtherOptions vIsOtherOptionsOn, CheckBox
+Gui Add, Text, x219 y56 w65 h14 +BackgroundTrans, Extra Stuff
 
-Gui Add, ComboBox, x37 y184 w120 vMencoderCodecs Choose8, %CodecList%
-Gui Add, GroupBox, x17 y97 w168 h125, MEncoder Codecs
-Gui Add, Edit, x610 y208 w120 h21
-Gui Add, CheckBox, x47 y159 w104 h23 vRescaleMEncoderCodec, Attempt Rescale?
-Gui Add, GroupBox, x17 y226 w168 h125, FFmpeg Codecs
-Gui Add, ComboBox, x39 y314 w120 vFFmpegCodecs, %FFEncoderList%
-
-Gui Add, GroupBox, x219 y97 w270 h253, Tomato Datamoshing
-Gui Add, ComboBox, x286 y170 w120 Choose7 vTomatoMode, irep|ikill|iswap|bloom|pulse|shuffle|overlapped|jiggle|reverse|invert
-Gui Add, Edit, x325 y217 w41 h21 vTomatoFrameCount +Center, 4
-Gui Add, Edit, x325 y264 w41 h21 vTomatoFramePosition +Center, 2
-Gui Add, Text, x314 y194 w62 h23 +0x200, Frame Count
-Gui Add, Text, x309 y241 w71 h23 +0x200, Frame Position
-Gui Add, Text, x305 y147 w81 h23 +0x200, Datamosh Mode
-Gui Add, Button, x290 y288 w110 h46 vTomatoMOSHIT gCommenceTomatoDatamosh, DATAMOSH IT
-Gui Add, Button, x455 y109 w23 h23 gTomatoHalp, ?
-
-Gui Add, Button, x407 y63 w96 h30 gForcePythonLocation, Force Python Path
-
-Gui Add, Radio, x165 y106 w16 h22 gEnableME vEnableMEncoderCodec Checked
-Gui Add, Radio, x167 y235 w16 h22 gEnableFF vEnableFFmpegCodec
-
-Gui Add, Button, x408 y288 w65 h46 vReCompress gReCompressMoshedOutput, Recompress
-Gui Add, Button, x235 y288 w48 h46 vTomatoRecycle gRecycleTomatoOutput, Remosh
-
-Gui Add, Button, x158 y183 w22 h23 vMEncoderCompression gPreMEncoderCompression, GO
-Gui Add, Button, x159 y313 w22 h23 vFFmpegCompression gPreFFmpegCompression, GO
+;MEncoder GUI Stuff
+Gui Add, GroupBox, x17 y97 w168 h125 ,
+Gui Add, ComboBox, x37 y184 w120 vMencoderCodecs Choose6, %CodecList%
 Gui Add, Edit, x37 y136 w120 h21 vMEncoderOptions, -nosound -noskip
-Gui Add, Text, x66 y120 w71 h15 +0x200, Codec Options
+Gui Add, Text, x52 y120 w90 h15 +0x200 +BackgroundTrans, MEncoder Options
+Gui Add, CheckBox, x47 y159 w104 h23 vRescaleMEncoderCodec hWndRescaleMEncoderCodec, Attempt Rescale?
+Gui Add, Button, x158 y183 w22 h23 vMEncoderCompression gPreMEncoderCompression, GO
+
+GuiControl, +BackgroundBlack, % RescaleMEncoderCodec
+
+;FFmpeg GUI Stuff
+Gui Add, GroupBox, x17 y226 w168 h125 , 
+Gui Add, ComboBox, x39 y314 w120 vFFmpegCodecs, %FFEncoderList%
 Gui Add, Edit, x38 y266 w120 h21 vFFmpegOptions, -bf 0 -g 999999 -an
-Gui Add, Text, x63 y250 w71 h15 +0x200, Codec Options
+Gui Add, Text, x60 y250 w90 h15 +BackgroundTrans, FFmpeg Options
 Gui Add, Button, x158 y265 w22 h23 vFFGetOptions gListCodecOptions, ?
+Gui Add, Button, x159 y313 w22 h23 vFFmpegCompression gPreFFmpegCompression, GO
+Gui Add, Slider, x19 y289 w164 h18 Range0-1000 vVideoQuality gVideoQualitySlider AltSubmit, 10
 
+;Tomato GUI Stuff
+Gui Add, GroupBox, x198 y97 w270 h254,
+Gui Add, ComboBox, x265 y171 w120 Choose7 vTomatoMode, irep|ikill|iswap|bloom|pulse|shuffle|overlapped|jiggle|reverse|invert
+Gui Add, Edit, x303 y217 w41 h21 vTomatoFramePosition +Center, 2
+Gui Add, Edit, x303 y264 w41 h21 vTomatoFrameCount +Center, 4
+Gui Add, Text, x293 y195 w62 h23 +0x200 +BackgroundTrans, Frame Count
+Gui Add, Text, x288 y242 w71 h23 +0x200 +BackgroundTrans, Frame Position
+Gui Add, Text, x282 y148 w81 h23 +0x200 +BackgroundTrans, Datamosh Mode
+Gui Add, Button, x269 y289 w110 h46 vTomatoMOSHIT gCommenceTomatoDatamosh -E0x200 BackgroundTrans -Border, DATAMOSH IT
+WinSet, Region, % "0-0" "W" 110-1 " " "H" 46-1 R10-10, DATAMOSH IT
+GuiControl, Move, TomatoMOSHIT, w110-2 h46-2 x269-1 y289-1
 
-Gui Add, Text, x63 y250 w71 h15, Codec Options
-Gui Add, GroupBox, x17 y10 w127 h83, Webcam Input
+;Trying to remove the button borders :(
+;WinSet, Region, Region, 1-1 W200 H150, DATAMOSH IT
+;GuiControl, Move, TomatoMOSHIT, % "x" 269 " y" 289 " w" 110 - 1
+
+Gui Add, Button, x387 y289 w65 h46 vReCompress gReCompressMoshedOutput, Recompress
+Gui Add, Button, x214 y289 w48 h46 vTomatoRecycle gRecycleTomatoOutput, Remosh
+Gui Add, Button, x438 y111 w23 h23 vTomatoHalpButton gTomatoHalp, ?
+Gui Add, CheckBox, x227 y123 w13 h22 vPythonLocationIsOn gEnableForcePythonLocation, CheckBox
+Gui Add, Text, x205 y110 w65 h13, Force Python
+;Gui Add, Button, x410 y62 w90 h30 vpythonButton gForcePythonLocation, Force Python Path
+
+;Compress with FFmpeg or MEncoder GUI Radio elements
+Gui Add, Radio, x168 y106 w15 h16 gEnableME vEnableMEncoderCodec Checked
+Gui Add, Radio, x168 y235 w15 h16 gEnableFF vEnableFFmpegCodec
+
+;WebCam GUI Stuff
+Gui Add, GroupBox, x17 y10 w127 h83 +0x300,
 Gui Add, ComboBox, x22 y28 w117 vWebCamName, %DeviceList%
 Gui Add, Button, x21 y55 w50 h31 gGetDevices, List Devices
 Gui Add, Button, x90 y55 w50 h31 gSelectWebcam, Use Device
-
-Gui Add, Slider, x19 y289 w164 h18 Range0-1000 vVideoQuality gVideoQualitySlider AltSubmit, 10
 
 ;Disable some stuff by default.
 GuiControl, 1:Disable, FFmpegCodecs
 GuiControl, 1:Disable, FFmpegOptions
 GuiControl, 1:Disable, FFGetOptions
 GuiControl, 1:Disable, FFmpegCompression
+GuiControl, 1:Disable, VideoQuality
 GuiControl, 1:Disable, TomatoMode
 GuiControl, 1:Disable, TomatoFrameCount
 GuiControl, 1:Disable, TomatoFramePosition
@@ -155,32 +119,494 @@ GuiControl, 1:Disable, TomatoRecycle
 GuiControl, 1:Disable, ResolutionVar
 GuiControl, 1:Disable, FrameRateVar
 GuiControl, 1:Disable, Recompress
+
 WebcamSource := ""
 isBatchFilename := 0
+RecompressVar := "MEncoder" ;Default Compressor.
+BatchInputHelpMsg := 1 ;Display help msg once once every startup.
+GlobalResolutionVar := 0 ;Needed this in order for the Extra Options to work correctly.
+ReverseDecompression := 0
+ReverseOnce := 1
+isRecompressed := 0
+WebcamCompression := "0"
 
-;Default Compressor.
-RecompressVar := "MEncoder"
-;Display help msg once once every startup.
-BatchInputHelpMsg := 1
-
-Gui Show, w504 h363, Datamosh Den - Ver 1.7.8 (Debug)
+Gui Show, w485 h363, Datamosh Den - Ver 1.8.3 (Beta)
 
 ;Check if newer MEncoder package is in folder, if so extract it.
 #Include config/GetFFmpeg.ahk
 #Include config/unzip.ahk
+#Include config/GetDifference.ahk
 Return
+
+
+
+EnableOtherOptions:
+GuiControlGet, IsOtherOptionsOn
+
+if (IsOtherOptionsOn = 1) {
+	global UseOtherOptions = 1
+	gosub, OtherOptions
+}
+
+if (IsOtherOptionsOn = 0) {
+	msgbox, Disabled Extra Options :(
+	
+	global UseOtherOptions = 0		
+	global EncHori := 0
+	global EncVert := 0
+	global EncTrans := 0
+	global EncRev := 0
+	global EncInv := 0
+	global EncHue := 0
+	global DecHori := 0
+	global DecVert := 0
+	global DecTrans := 0
+	global DecRev := 0
+	global DecInv := 0
+	global DecHue := 0
+	global ReverseCompression := 0	
+	global EncodeReversibleFilterVal := ""
+	global DecodeReversibleFilterVal := ""
+	
+}
+Return
+
+#Include %A_ScriptDir%\config\AutoXYWH.ahk
+OtherOptions:
+
+EncodeReversibleFilterVal := "" ;Reset Filter Vals
+DecodeReversibleFilterVal := "" ;Reset Filter Vals
+
+Gui, New ;Needed for AutoXYWH.ahk to work on a second GUI window.
+Gui, Color, DDCEE9
+Gui  +Resize
+Gui Add, CheckBox, x12 y28 w120 h23 vEncHori, Horizontal Flip
+Gui Add, CheckBox, x136 y28 w120 h23 +0x220 vDecHori, Horizontal Flip
+Gui Add, CheckBox, x12 y53 w120 h23 vEncVert, Vertical Flip
+Gui Add, CheckBox, x136 y53 w120 h23 +0x220 vDecVert, Vertical Flip
+Gui Add, CheckBox, x12 y78 w120 h23 vEncTrans, Transpose
+Gui Add, CheckBox, x136 y78 w120 h23 +0x220 vDecTrans, Transpose
+Gui Font, s9 Underline, Verdana
+Gui Add, Text, x12 y2 w120 h23 +0x200, Encoding Filters:
+Gui Font
+Gui Font, s9 Underline, Verdana
+Gui Add, Text, x136 y2 w120 h23 +0x200 +0x2, Decoding Filters:
+Gui Font
+Gui Add, CheckBox, x12 y103 w60 h23 vEncRev, Reverse
+Gui Add, CheckBox, x196 y103 w60 h23 +0x220 vDecRev, Reverse
+Gui Add, CheckBox, x12 y153 w42 h23 vEncHue gEnableHueSlider, Hue
+Gui Add, CheckBox, x215 y153 w41 h23 +0x220 vDecHue, Hue
+Gui Add, CheckBox, x12 y128 w60 h23 vEncInv, Invert
+Gui Add, CheckBox, x196 y128 w60 h23 +0x220 vDecInv, Invert
+Gui Add, Edit, hWndhEdtValue2 x153 y241 w109 h60 vCustomDecodeFilterVal
+Gui Font, s8, Georgia
+Gui Add, Text, x10 y208 w95 h31 +Disabled, Custom Encode`n           Filter:
+Gui Font
+Gui Add, CheckBox, x26 y222 w13 h13 vEnableCustomEncodeWindowVar gEnableCustomEncodeWindow +Disabled, CheckBox
+Gui Add, Edit, hWndhEdtValue x5 y241 w109 h60 vCustomEncodeFilterVal
+Gui Font, s8, Georgia
+Gui Add, Text, x161 y208 w95 h31 +Disabled, Custom Decode`n           Filter:
+Gui Add, CheckBox, x177 y223 w13 h13 vEnableCustomDecodeWindowVar gEnableCustomDecodeWindow +Disabled, CheckBox
+Gui Font
+gosub, EnableForceRes
+huh = oshitwaddupyowhatareudoingtodayimdoingjustdandythanksforaskinglolihopeyouhaveawonderfuldaykthxbaikmsroflmao
+GuiControl, Disable, CustomDecodeFilterVal
+GuiControl, Disable, CustomEncodeFilterVal
+;Gui Add, Button, x93 y169 w81 h28 gCloseExtraOptions, Submit
+Gui Add, Button, x93 y148 w81 h27 gCloseExtraOptions, Submit
+
+
+
+
+GuiControlGet, ForceResVar,,ForceRes
+;Close GUI after hitting ENTER Key 
+OnMessage(0x100, "OnKeyDown")
+OnKeyDown(wParam)
+{
+	;had to add these globals here in order for the values to be available to the function. idk another way at the moment.
+	global EncHori
+	global EncVert
+	global EncTrans
+	global EncRev
+	global EncInv
+	global EncHue
+	global DecHori
+	global DecVert
+	global DecTrans
+	global DecRev
+	global DecInv
+	global DecHue
+	global RecompressVar
+	global EncodeReversibleFilterVal
+	global DecodeReversibleFilterVal
+	global ResolutionVar
+	global ForceResVar
+	global ReverseCompression
+	
+	IfWinActive, Extra ;The second GUI windows name.
+	{
+		if (wParam = 13) ;This is the Enter Key Param
+		{
+			Gui, Submit, NoHide			
+			msgbox, Using the selected %RecompressVar% Filters!
+			Gui, Destroy
+		}
+	}
+}
+
+Gui  -sysmenu
+Gui Show, w267 h305, Extra Options - Press The Enter Key When Done`n-%huh%
+Gui, +MinSize +MinSize267x ;Limit the how small option the window gets :3 
+Return
+
+CloseExtraOptions:
+Gui, Submit, NoHide			
+msgbox, Using the selected %RecompressVar% Filters!
+Gui, Destroy
+Return
+
+EnableCustomEncodeWindow:
+GuiControlGet, EnableCustomEncodeWindowVar
+if (EnableCustomEncodeWindowVar = 0) {
+	GuiControl, Disable, CustomEncodeFilterVal
+}
+
+if (EnableCustomEncodeWindowVar = 1) {
+	GuiControl, Enable, CustomEncodeFilterVal
+}
+Return
+
+EnableCustomDecodeWindow:
+GuiControlGet, EnableCustomDecodeWindowVar
+if (EnableCustomDecodeWindowVar = 0) {
+	GuiControl, Disable, CustomDecodeFilterVal
+}
+
+if (EnableCustomDecodeWindowVar = 1) {
+	GuiControl, Enable, CustomDecodeFilterVal
+}
+Return
+
+GuiSize: ;Resize the custom filter edit box natively with the GUI size.
+If (A_EventInfo == 0) {
+	Return
+}
+GuiControlGet, EnableCustomEncodeWindowVar
+if (EnableCustomEncodeWindowVar = 1) {
+	AutoXYWH("wh*", hEdtValue)
+}
+
+GuiControlGet, EnableCustomDecodeWindowVar
+if (EnableCustomDecodeWindowVar = 1) {
+     AutoXYWH("wh*", hEdtValue2)
+}
+Return
+
+GetFilters:
+		;Horizontal Filters
+if (EncHori = 0) {
+				;EncodeReversibleFilterVal := ""
+}
+if (EncHori = 1) && (RecompressVar = "MEncoder") {
+	EncodeReversibleFilterVal .= "," . "mirror"
+}
+if (EncHori = 1) && (RecompressVar = "FFmpeg") {
+	EncodeReversibleFilterVal .= "," . "hflip"
+}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+if (DecHori = 0) {
+				;DecodeReversibleFilterVal := ""
+}
+if (DecHori = 1) && (RecompressVar = "MEncoder") {
+	DecodeReversibleFilterVal .= "," . "mirror"
+}
+if (DecHori = 1) && (RecompressVar = "FFmpeg") {
+	DecodeReversibleFilterVal .= "," . "mirror"
+}
+
+
+		;Vertical Filters
+if (EncVert = 0) {
+				;EncodeReversibleFilterVal := ""
+}
+if (EncVert = 1) && (RecompressVar = "MEncoder") {
+	EncodeReversibleFilterVal .= "," . "flip"
+}
+if (EncVert = 1) && (RecompressVar = "FFmpeg") {
+	EncodeReversibleFilterVal .= "," . "vflip"
+}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+if (DecVert = 0) {
+				;DecodeReversibleFilterVal := ""
+}
+if (DecVert = 1) && (RecompressVar = "MEncoder") {
+	DecodeReversibleFilterVal .= "," . "flip"
+}
+if (DecVert = 1) && (RecompressVar = "FFmpeg") {
+	DecodeReversibleFilterVal .= "," . "flip"
+}
+
+
+		;Transpose Filters
+if (EncTrans = 0) {
+				;EncodeReversibleFilterVal := ""
+}
+if (EncTrans = 1) && (RecompressVar = "MEncoder") {
+	EncodeReversibleFilterVal .= "," . "rotate=0"
+}
+if (EncTrans = 1) && (RecompressVar = "FFmpeg") {
+	EncodeReversibleFilterVal .= "," . "transpose=0"
+}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+if (DecTrans = 0) {
+				;DecodeReversibleFilterVal := ""
+}
+if (DecTrans = 1) && (EncVert = 0) && (EncHori = 0) && (RecompressVar = "MEncoder") else if (RecompressVar = "FFmpeg") {
+	DecodeReversibleFilterVal .= "," . "rotate=0"
+}
+if (DecTrans = 1) && (EncVert = 1) && (EncHori = 1) && (RecompressVar = "MEncoder") else if (RecompressVar = "FFmpeg") {
+	DecodeReversibleFilterVal .= "," . "rotate=1" ;FFmpeg version is transpose=0
+}
+if (DecTrans = 1) && (EncVert = 0) && (EncHori = 1) && (RecompressVar = "MEncoder") else if (RecompressVar = "FFmpeg") {
+	DecodeReversibleFilterVal .= "," . "rotate=2" ;FFmpeg version is transpose=0
+}
+if (DecTrans = 1) && (EncVert = 1) && (EncHori = 0) && (RecompressVar = "MEncoder") else if (RecompressVar = "FFmpeg") {
+	DecodeReversibleFilterVal .= "," . "rotate=2" ;FFmpeg version is transpose=0
+}
+
+
+		;Reverse Filters, coming soon.
+if (EncRev = 0) {
+	;EncodeReversibleFilterVal := ""
+}
+if (EncRev = 1) && (RecompressVar = "MEncoder") {
+	EncodeReversibleFilterVal .= "," . "scale"
+}
+if (EncRev = 1) && (RecompressVar = "FFmpeg") {
+	EncodeReversibleFilterVal .= "," . "reverse"
+}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+if (DecRev = 0) {
+	;DecodeReversibleFilterVal := ""
+}
+if (DecRev = 1) && (RecompressVar = "MEncoder") {
+	DecodeReversibleFilterVal .= "," . "scale"
+}
+if (DecRev = 1) && (RecompressVar = "FFmpeg") {
+	DecodeReversibleFilterVal .= "," . "reverse"
+}
+
+
+		;Invert Filters
+if (EncInv = 0) {
+				;EncodeReversibleFilterVal := ""
+}
+if (EncInv = 1) && (RecompressVar = "MEncoder") {
+	EncodeReversibleFilterVal .= "," . "eq2=0:-1:0,scale"
+}
+if (EncInv = 1) && (RecompressVar = "FFmpeg") {
+	EncodeReversibleFilterVal .= "," . "eq=-1"
+}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+if (DecInv = 0) {
+				;DecodeReversibleFilterVal := ""
+}
+if (DecInv = 1) && (RecompressVar = "MEncoder") {
+	DecodeReversibleFilterVal .= "," . "eq2=0:-1:0,scale"
+}
+if (DecInv = 1) && (RecompressVar = "FFmpeg") {
+	DecodeReversibleFilterVal .= "," . "eq2=0:-1:0,scale"
+}
+
+
+		;Hue Filters
+if (EncHue = 0) {
+				;EncodeReversibleFilterVal := ""
+}
+if (EncHue = 1) && (RecompressVar = "MEncoder") {
+	EncodeReversibleFilterVal .= "," . "hue=" . HueValue . ",scale" ;Scale is needed to correct the colorspace I guess?
+}
+if (EncHue = 1) && (RecompressVar = "FFmpeg") {
+	EncodeReversibleFilterVal .= "," . "hue=" . HueValue
+}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+if (DecHue = 0) {
+				;DecodeReversibleFilterVal := ""
+}
+if (DecHue = 1) && !RegExMatch(HueValue,"(-)") && (RecompressVar = "MEncoder") {
+	DecodeReversibleFilterVal .= "," . "hue=-" . HueValue . ",scale"
+}
+if (DecHue = 1) && !RegExMatch(HueValue,"(-)") && (RecompressVar = "FFmpeg") {
+	DecodeReversibleFilterVal .= "," . "hue=-" . HueValue
+}
+if (DecHue = 1) && RegExMatch(HueValue,"(-)") && (RecompressVar = "FFmpeg") else if (RecompressVar = "MEncoder") {
+	if InStr(HueValue, "-") {
+		StringTrimLeft, HueValue2, HueValue, 1 ;Remove the negative symbol.
+	}
+	
+	DecodeReversibleFilterVal .= "," . "hue=" . HueValue2
+}
+
+StringTrimLeft, EncodeReversibleFilterVal, EncodeReversibleFilterVal, 1 ;Remove extra comma
+
+CheckComma := SubStr(DecodeReversibleFilterVal, 1, 1) ;Crop string down to first char.
+if (CheckComma = ",") { ;Check if first char in string is a comma.
+	StringTrimLeft, DecodeReversibleFilterVal, DecodeReversibleFilterVal, 1 ;Remove extra comma
+	;DecodeReversibleFilterVal := SubStr(DecodeReversibleFilterVal, 1, -2) ;I tried this but it removed more than 1.
+	DecodeReversibleFilterVal := " -vf " . DecodeReversibleFilterVal ;add -vf to string.
+	
+}
+Return
+
+EnableHueSlider:
+GuiControlGet, EncHue
+if (EncHue = 0) {
+	Return
+}
+
+if (EncHue = 1) {
+	Gui, hue:Color, DDCEE9	
+	Gui hue:Add, Button, x12 y99 w154 h33 gCloseHueMenu, Apply Hue Changes
+	Gui hue:Add, Slider, x2 y61 w172 h32 Range-180-180 vHueValue gHueColorSlider AltSubmit, 0
+	Gui hue:Add, Text, x85 y35 w16 h23 +0x200, 0
+	Gui hue:Add, Text, x149 y36 w24 h23 +0x200, 180
+	Gui hue:Add, Text, x5 y35 w24 h23 +0x200, -180
+	Gui hue:Font, s9, Consolas
+	Gui hue:Add, Text, x8 y0 w172 h33 +0x200, Ghetto Hue Color Picker
+	Gui hue:Font
+	Gui hue:Show, w176 h136, `n
+	Gui hue:-sysmenu
+}
+Return
+
+HueColorSlider:
+tooltip % HueValue
+SetTimer, RemoveToolTip2, 500
+return
+
+RemoveToolTip2:
+SetTimer, RemoveToolTip2, Off
+ToolTip
+return
+
+CloseHueMenu:
+Gui, hue:Submit, NoHide
+gosub, GetFilters
+Gui, hue:Destroy
+Return
+
+EnableReverseVideo:
+gosub, EnableForceRate
+gosub, EnableForceRes
+gosub, OutputLocation
+CheckFile := InputFolder . "\output.avi"
+
+if (EncRev = 1) && (isRecompressed = 0) {
+	;sourceFile := DefaultSourceFile
+}
+
+if (EncRev = 0) && (isRecompressed = 0) {
+	;sourceFile := DefaultSourceFile ;this should be the bug
+	Return
+}
+
+if (EncRev = 1) && (isRecompressed = 1) {
+	SourceFile := OutputFolder . "\output-moshed.avi"
+}
+
+if (EncRev = 0) && (isRecompressed = 1) {
+	SourceFile := OutputFolder . "\output-moshed.avi"
+	Return
+}
+
+if (EncRev = 0) && (isRecompressed = 1) && (WebcamCompression = 1) {
+	SourceFile := OutputFolder . "\webcam-output.avi"
+	Return
+}
+
+if (EncRev = 1) {
+	if FileExist(CheckFile) && (ReverseOnce = 1) && (isRecompressed = 0) {
+		;msgbox, wao its off???
+		sourceFileRev := DefaultSourceFile
+		
+		if (ReverseWebcam = 1) {
+			sourceFileRev := InputFolder . "\webcam-output.avi"
+		}
+		
+		FFReverseCompress := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . sourceFileRev . chr(0x22) . " " . ResolutionVar . FrameRate . " -f avi -c:v huffyuv -vf reverse " . InputFolder . "\output2.avi -y"
+		
+		runwait, %FFReverseCompress%	
+		SourceFile := InputFolder . "\output2.avi"
+		ReverseCompression := "0"
+		;ReverseOnce := 0
+		Return
+	}
+	
+	
+	if FileExist(CheckFile) && (ReverseOnce = 1) && (isRecompressed = 1) {
+		;FileMove, %InputFolder%/output2.avi, %InputFolder%/output.avi
+		msgbox, Since you have 'Reverse' Enabled during Recompress`nWe have to bake the video before passing to to FFmpeg...
+		YUVBake := "mplayer " . CustomCodecFix . " -sws 4 " . DecodeReversibleFilterVal . " " . " -vo yuv4mpeg " . OutputFolder . "\output-moshed.avi"
+		runwait, %YUVBake%
+		WinWaitClose, cmd
+		FileMove, stream.yuv,  %OutputFolder%\ImBaked.yuv
+		sleep, 1
+		sourceFileRev := OutputFolder . "\ImBaked.yuv"
+		
+		if (ReverseWebcam = 1) && (isRecompressed = 0) {
+			sourceFileRev := InputFolder . "\webcam-output.avi"
+		}
+		
+		if (ReverseWebcam = 1) && (isRecompressed = 1) {
+			sourceFileRev := OutputFolder . "\ImBaked.yuv"
+		}
+		
+		FFReverseCompress := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . sourceFileRev . chr(0x22) . " " . ResolutionVar . FrameRate . " -f avi -c:v huffyuv -vf reverse " . InputFolder . "\output2.avi -y"
+		
+		msgbox, %FFReverseCompress%
+		runwait, %FFReverseCompress%
+		SourceFile := InputFolder . "\output2.avi"
+		ReverseCompression := "0"
+          ;ReverseOnce := 0
+	}
+	
+}
+Return
+
+UnReverseVideo:
+gosub, OutputLocation
+gosub, EnableForceRes
+
+if (DecRev = 1) {
+	msgbox, aw shit you have reverse enabled for decoding, here we go.`nBtw if probably won't work well with the video/audio sync options.
+	inputFile := OutputFolder . "\ImBaked.yuv "	
+	FFReverseCompress := ComSpec . " /k " . " ffmpeg -i " . chr(0x22) . inputFile . chr(0x22) . " " . ResolutionVar . FrameRate . " -f avi -c:v huffyuv -vf reverse " . InputFolder . "\unreversed-output.avi -y"
+	msgbox, %FFReverseCompress%
+	runwait, %FFReverseCompress%	
+	
+	sourceFileReversed := InputFolder . "\unreversed-output.avi"
+	ShowIt := "cmd.exe /c ffplay -i " . sourceFileReversed . " -loop 0"
+	
+	runwait, %ShowIt%
+	ReverseCompression := "0"
+	UnReverseCompression := 1
+	return
+	
+}
+else
+Return
+
 
 BatchInputMessage:
 Gui, Submit, NoHide
 if (IsBatchInput = 1) && if (BatchInputHelpMsg = 1){
-     msgbox, ohey batch input is enabled!`nUse the Source button to select a folder...`n`nThen press GO.
+	msgbox, ohey batch input is enabled!`nUse the Source button to select a folder...`n`nThen press GO.
 }
 
 if (IsBatchInput = 0) && if (BatchInputHelpMsg = 1) {
 	msgbox, ohey batch input is disabled!`nUse the source button to select a file...`n`nThen press GO.`nThis dialog won't bother you anymore.
 	BatchInputHelpMsg := 0 ;Turns off the help box until next startup.
 }
-
 Return
 
 
@@ -190,8 +616,8 @@ int := VideoQuality/10
 fra := Mod(int, 10)
 fra := SubStr(fra, InStr(fra,".")+1, 1 )
 val :=  Floor(int) "." fra
-VideoQuality := val
-tooltip % VideoQuality
+VQuality := val
+tooltip % VQuality
 SetTimer, RemoveToolTip1, 500
 return
 
@@ -200,7 +626,7 @@ SetTimer, RemoveToolTip1, Off
 ToolTip
 return
 
-GetDevices:
+GetDevices: ;Thank u again for the Regex, Salz <3
 MakeList := ""
 DirtyList := ""
 msgbox,4096,,
@@ -234,70 +660,82 @@ Return
 
 SelectWebcam:
 Gui, Submit, NoHide
-  GuiControl, 1:Disable, FrameRateVar ;This fucks up the compression, unless the FPS you use matches one supported by the device.
-  GuiControl, 1:, ForceRate, 0
-   WebCam := " -f dshow -i video=" . chr(0x22) . WebCamName . chr(0x22) . " "
-   WebcamCompression := "1"
-  msgbox, %WebCamName% selected as input device.`n   Hit this button every time before "GO"`n       if you want to record a new video.`n`n                 Press Q to stop Webcam.
+GuiControl, 1:Disable, FrameRateVar ;This fucks up the compression, unless the FPS you use matches one supported by the device.
+GuiControl, 1:, ForceRate, 0
+GuiControl,, IsBatchInput, 0 ;Disable the BatchInput checkbox to avoid filename conflicts.
+IsBatchInput := "0" ;Resets the input to be just WebCam, if in case for example you were doing batch datamoshing before this.
+
+WebCam := " -f dshow -i video=" . chr(0x22) . WebCamName . chr(0x22) . " "
+WebcamCompression := "1"
+ReverseWebcam := 1 ; HERE IS WHERE I LAST EDITED
+
+msgbox, %WebCamName% selected as input device.`n   Hit this button every time before "GO"`n       if you want to record a new video.`n`n                 Press Q to stop Webcam.
 Return
 
 WebCamCompression:
 ;Gui, Submit, NoHide
 gosub, EnableForceRate
 gosub, EnableForceRes
+gosub, OutputLocation
 
 if (WebcamCompression = 1) {
-	FFWebcamCompress := cmd.exe /k "ffmpeg " . InputFrameRate . WebCam . ResolutionVar . FrameRate . " -f avi -c:v huffyuv webcam-output.avi -y"
-	;msgbox, %FFWebcamCompress%
+	FFWebcamCompress := ComSpec . " /c " . " ffmpeg " . InputFrameRate . WebCam . ResolutionVar . FrameRate . " -f avi -c:v huffyuv " . InputFolder . "\webcam-output.avi -y"
+	
 	runwait, %FFWebcamCompress%	
-	SourceFile := "webcam-output.avi"
+	SourceFile := InputFolder . "\webcam-output.avi"
 	WebcamCompression := "0"
 	return
 	
 }
 Return
 
+
+
 SelectSource:
 Gui, Submit, NoHide
 WebcamCompression := "0"
 
 if (IsBatchInput = 1) {
-FileCreateDir, %A_ScriptDir%\Batch-Output
-FileSelectFolder,leFolder, *%A_ScriptDir%,3,Select The Input Folder.....................
-if errorlevel {
-	msgbox, You Didnt Select Anything lol
-	return
- }
+	FileCreateDir, %A_ScriptDir%\Batch-Output
+	FileSelectFolder,leFolder, *%A_ScriptDir%,3,Select The Input Folder.....................
+	if errorlevel {
+		msgbox, You Didnt Select Anything lol
+		return
+	}
 }
 else
-FileSelectFile, SourceFile,,,Select Source For Datamoshing......................................
-if errorlevel {
+	FileSelectFile, SourceFile,,,Select Source For Datamoshing......................................
+     DefaultSourceFile := SourceFile
+     if errorlevel {
 	msgbox, You Didnt Select Anything lol
 	return
 }
 Return
 
 
+
 EnableME:
 GuiControlGet, EnableMEncoderCodec
 if (EnableMEncoderCodec = 1) {
 	GuiControl, 1:Enable, MencoderCodecs
-     GuiControl, 1:Enable, MencoderOptions
+	GuiControl, 1:Enable, MencoderOptions
 	GuiControl, 1:Enable, RescaleMEncoderCodec
 	GuiControl, 1:Enable, MEncoderCompression
 	
 	GuiControl, 1:Disable, FFmpegCodecs
 	GuiControl, 1:Disable, FFmpegOptions
 	GuiControl, 1:Disable, FFmpegCompression
-	GuiControl, 1:Disable, FFGetOptions	
+	GuiControl, 1:Disable, FFGetOptions
+	GuiControl, 1:Disable, VideoQuality
 	
 	GuiControl, 1:Disable, TomatoMode
 	GuiControl, 1:Disable, TomatoFrameCount
 	GuiControl, 1:Disable, TomatoFramePosition
 	GuiControl, 1:Disable, TomatoMOSHIT
 	GuiControl, 1:Disable, TomatoRecycle
+	GuiControl, 1:, FFmpegOptions, -bf 0 -g 999999 -an
 	
-	;GuiControl, 1:Disable, Recompress
+	
 	RecompressVar := "MEncoder"
 }
 return
@@ -308,7 +746,9 @@ if (EnableFFmpegCodec = 1) {
 	GuiControl, 1:Enable, FFmpegCodecs
 	GuiControl, 1:Enable, FFmpegOptions
 	GuiControl, 1:Enable, FFmpegCompression
-	GuiControl, 1:Enable, FFGetOptions	
+	GuiControl, 1:Enable, FFGetOptions
+	GuiControl, 1:Enable, VideoQuality
+	
 	GuiControl, 1:Disable, MencoderCodecs
 	GuiControl, 1:Disable, MEncoderOptions
 	GuiControl, 1:Disable, RescaleMEncoderCodec
@@ -319,8 +759,9 @@ if (EnableFFmpegCodec = 1) {
 	GuiControl, 1:Disable, TomatoFramePosition
 	GuiControl, 1:Disable, TomatoMOSHIT
 	GuiControl, 1:Disable, TomatoRecycle
-   	
-	;GuiControl, 1:Disable, Recompress
+	GuiControl, 1:, MEncoderOptions, -nosound -noskip
+	
+	
 	RecompressVar := "FFmpeg"
 }
 return
@@ -334,18 +775,21 @@ GuiControlGet, ForceRes
 if (ForceRes = 1) && (RecompressVar = "FFmpeg") {
 	GuiControl, 1:Enable, ResolutionVar
 	ResolutionVar := " -vf scale=" . ResolutionVar
+	global GlobalResolutionVar := 1	
 }
 
 if (ForceRes = 1) && (RecompressVar = "MEncoder") {
 	GuiControl, 1:Enable, ResolutionVar
 	ResolutionVar := " -vf scale=" . ResolutionVar
 	ResolutionVar := StrReplace(ResolutionVar, "x", ":")
+	global GlobalResolutionVar := 1
 	
 }
 
 if (ForceRes = 0) {
 	GuiControl, 1:Disable, ResolutionVar
 	ResolutionVar := ""
+	global GlobalResolutionVar := 0
 }
 
 if (ForceRate = 1) && (ForceRes = 1) && (RecompressVar = "FFmpeg") {
@@ -354,7 +798,6 @@ if (ForceRate = 1) && (ForceRes = 1) && (RecompressVar = "FFmpeg") {
 
 if (ForceRate = 1) && (ForceRes = 1) && (RecompressVar = "MEncoder") {
 	ResolutionVar := StrReplace(ResolutionVar, "x", ":")
-	;ResolutionVar := ""
 }
 Return
 
@@ -381,10 +824,19 @@ if (ForceRate = 0) {
 	InputFrameRate := ""
 }
 
-if (ForceRate = 1) && (ForceRes = 1) && (RecompressVar = "FFmpeg") {
-	FrameRate := " -vf fps=" . FrameRateVar . "," . "scale=" . ResolutionVar
-	ResolutionVar2 := ResolutionVar
+if (ForceRate = 0) && (ForceRes = 1) && (IsOtherOptionsOn = 0) && (RecompressVar = "FFmpeg") {
+	FrameRate := ""
+}
+
+
+if (ForceRate = 1) && (ForceRes = 1) && (IsOtherOptionsOn = 0) && (RecompressVar = "FFmpeg") {
+	FrameRate := " -vf fps=" . FrameRateVar . "," . "scale=" . ResolutionVa
 	ResolutionVar := ""
+}
+
+
+if (ForceRate = 1) && (ForceRes = 1) && (IsOtherOptionsOn = 1) && (RecompressVar = "FFmpeg") {
+	FrameRate := " -vf fps=" . FrameRateVar . "," . "scale=" . ResolutionVar
 }
 
 if (ForceRate = 1) && (ForceRes = 1) && (RecompressVar = "MEncoder") {
@@ -395,11 +847,153 @@ if (ForceRate = 1) && (ForceRes = 1) && (RecompressVar = "MEncoder") {
 Return
 ;WIP
 
+GetFilterOptionsAndFixStrings:
 
-EnableReverseVideo:
+;If force scale is enabled, add a comma and scale filter before all of these.
+gosub, EnableForceRes			
+if (GlobalResolutionVar = 1) && (IsOtherOptionsOn = 1) {
+	ResolutionVar := StrReplace(ResolutionVar, "x", ":") ;For MEncoder scale filter compatibility,
+	EncodeReversibleFilterVal := ResolutionVar . "," . EncodeReversibleFilterVal
+			;DecodeReversibleFilterVal := ResolutionVar . "," . DecodeReversibleFilterVal
+}
+
+;If force scale is enabled, But filters are off, don't add a comma.
+if (GlobalResolutionVar = 1) && (IsOtherOptionsOn = 0) else if (EnableForceRate = 1) {
+	ResolutionVar := StrReplace(ResolutionVar, "x", ":") ;For MEncoder scale filter compatibility,
+	EncodeReversibleFilterVal := ResolutionVar . EncodeReversibleFilterVal
+	DecodeReversibleFilterVal := ResolutionVar . DecodeReversibleFilterVal
+}
+
+			;msgbox, %EncodeReversibleFilterVal%
+			;msgbox, %DecodeReversibleFilterVal%
+
+if (UseOtherOptions = 0) { ;Remove the extra options/Reversible filters, if disabled.
+	EncodeReversibleFilterVal := ""
+	DecodeReversibleFilterVal := ""
+	vfFlag := ""
+}
+
+;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
+if (UseOtherOptions = 1) {
+	ResolutionVar := "" 
+	vfFlag := " -vf "	
+}
+
+
+;If force scale is disabled, add "-vf" to the filter variable.
+if (GlobalResolutionVar = 0) && if (UseOtherOptions = 1) {
+	EncodeReversibleFilterVal := vfFlag . EncodeReversibleFilterVal
+	;DecodeReversibleFilterVal := vfFlag . DecodeReversibleFilterVal
+	;DecodeReversibleFilterVal := " -vf " . DecodeReversibleFilterVal ;HERE
+	ResolutionVar := ""
+	ResolutionVar2 := ""			
+}
+
+;idk if i need this anymore
+if (GlobalResolutionVar = 1) && (UseOtherOptions = 1) {
+;ResolutionVar := ""
+}
+ 
+ ;if filters aren't selected, clear the entire variables.
+if (DecodeReversibleFilterVal = " -vf ") {
+	DecodeReversibleFilterVal := ""
+}
+
+;if filters aren't selected, clear the entire variables.
+if (EncodeReversibleFilterVal = " -vf ") {
+	EncodeReversibleFilterVal := ""
+}
+
+;idk if i need this anymore
+;StringTrimLeft, DecodeReversibleFilterVal, DecodeReversibleFilterVal, 1 ;REMOVED FOR BUG FIX
+
+
+gosub, EnableForceRate ;This was also an annoying bug I didnt know how else to fix.
+if (ForceRate = 1) && (ForceRes = 1) && (IsOtherOptionsOn = 1) && (RecompressVar = "FFmpeg") {
+	FrameRate := " -vf fps=" . FrameRateVar . "," . "scale=" . ResolutionVar . EncodeReversibleFilterVal
+	ResolutionVar := ""
+	EncodeReversibleFilterVal := ""
+}
+
+if (ForceRate = 1) && (ForceRes = 1) && (IsOtherOptionsOn = 1) && (RecompressVar = "MEncoder") {
+	FrameRate := " -fps " . FrameRateVar
+}
+
+if (ForceRate = 0) && (ForceRes = 1) && (IsOtherOptionsOn = 0) && (RecompressVar = "FFmpeg") {
+	ResolutionVar2 := ResolutionVar
+	ResolutionVar := ""
+	EncodeReversibleFilterVal := " -vf scale=" . ResolutionVar2
+}
+
+if (ForceRes = 1) && (ForceRate = 0) && (IsOtherOptionsOn = 0) && (RecompressVar = "MEncoder") {
+	ResolutionVar := " -vf scale=" . StrReplace(ResolutionVar, "x", ":")	
+	EncodeReversibleFilterVal := ""	
+}
+
+if (ForceRes = 0) && (ForceRate = 0) && (IsOtherOptionsOn = 0) && (RecompressVar = "MEncoder") {
+	ResolutionVar := ""
+	EncodeReversibleFilterVal := ""	
+}
+
+if (ForceRate = 1) && (ForceRes = 1) && (IsOtherOptionsOn = 0) && (RecompressVar = "MEncoder") {
+	EncodeReversibleFilterVal := ""	
+}
+
+if (ForceRes = 0) && (IsOtherOptionsOn = 1) {
+	ResolutionVar := "" ;Reset the Forced Resolution Variable, this was a very annoying bug idk how else to fix.
+}
+
+if (ForceRes = 1) && (IsOtherOptionsOn = 1) {
+	;EncodeReversibleFilterVal := ""	
+	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
+}
+
+;Messy bug fixes idk im very sleepy.
+if (ForceRate = 1) && (ForceRes = 0) && (IsOtherOptionsOn = 1) && (RecompressVar = "FFmpeg") {
+	StringTrimLeft, EncodeReversibleFilterVal, EncodeReversibleFilterVal, 5
+	EncodeReversibleFilterVal2 := EncodeReversibleFilterVal
+	FrameRate := " -vf fps=" . FrameRateVar . "," . EncodeReversibleFilterVal2
+	EncodeReversibleFilterVal := ""
+	
+	NewString := FrameRate
+	ReverseString := DllCall( "msvcrt.dll\_strrev", Str, NewString, UInt,0, Str) ;Reverses string cus idk how to use SubStr backwards.
+	CheckComma := SubStr(ReverseString, 1, 1) ;Crop string down to first char.
+	if (CheckComma = ",") { ;Check if first char in reversed string is a comma.
+		FrameRate := SubStr(FrameRate, 1, -1) ;Remove comma if last char is such.
+	}
+	
+}
+
+if (ForceRate = 0) && (ForceRes = 1) && (IsOtherOptionsOn = 1) && (RecompressVar = "FFmpeg") {
+	;Made this bug fix cus FFmpeg doesn't like trailing commas in filter options.
+	NewString := EncodeReversibleFilterVal
+	ReverseString := DllCall( "msvcrt.dll\_strrev", Str, NewString, UInt,0, Str) ;Reverses string cus idk how to use SubStr backwards.
+	CheckComma := SubStr(ReverseString, 1, 1) ;Crop string down to first char.
+	if (CheckComma = ",") { ;Check if first char in reversed string is a comma.
+		EncodeReversibleFilterVal := SubStr(EncodeReversibleFilterVal, 1, -1) ;Remove comma if last char is such.
+	}
+}
+
+if (ForceRate = 0) && (ForceRes = 0) && (IsOtherOptionsOn = 0) && (RecompressVar = "FFmpeg") {
+	ResolutionVar := "" ;Clear unused res var
+}
+
+if (ForceRate = 0) && (ForceRes = 0) && (IsOtherOptionsOn = 0) && (RecompressVar = "MEncoder") {
+	ResolutionVar := "" ;Clear unused res var
+}
+
+if (ForceRate = 1) && (ForceRes = 0) && (IsOtherOptionsOn = 0) && (RecompressVar = "MEncoder") {
+	ResolutionVar := "" ;Clear unused res var
+}
 Return
 
+
+
 PreMEncoderCompression:
+if (SourceFile = "") && (WebcamCompression = 0) {
+	msgbox, uhhh you didn't select a video source???
+}
+
 if (IsBatchInput = 0) {
 	goto, MEncoderCompression
 	Return
@@ -427,23 +1021,40 @@ GuiControl, 1:Disable, Recompress
 RecompressVar := "MEncoder"
 config = ":compdata=dialog"
 OutputFilename := "./MEncoder-Output/" . codecname . "/output.avi" ;Default output filename.
+EncodeReversibleFilterVal := "" ;Reset Filter value to avoid conflictions.
+DecodeReversibleFilterVal := "" ;Reset Filter value to avoid conflictions.
+
 
 if (MencoderCodecs = "vp31vfw.dll") {
 	config = "" ;Configure dialog is broken for vp3.	
 }
 
+
 gosub, WebCamCompression
+gosub, EnableReverseVideo
 gosub, EnableForceRate
 gosub, EnableForceRes
+gosub, GetFilters
+gosub, GetFilterOptionsAndFixStrings
 
-if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll") else if (MencoderCodecs = "Amv3Codec.dll") {
-	gosub, CustomAMVCompression ;Remove Watermark.
-	Return
+if (UseOtherOptions = 0) { ;Remove the extra options/Reversible filters, if disabled.
+	EncodeReversibleFilterVal := ""
+	DecodeReversibleFilterVal := ""
+	vfFlag := ""
+}
+
+if (ForceRes = 1) && if (UseOtherOptions = 1) {
+	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
 }
 
 if (SourceFile = "") {
 	msgbox, Select Something Yo.
 	return
+}
+
+if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll") else if (MencoderCodecs = "Amv3Codec.dll") {
+	gosub, CustomAMVCompression ;Remove Watermark.
+	Return
 }
 
 if (isBatchFilename = 1) { ; This is where the Batch output stuff happens.
@@ -453,17 +1064,35 @@ if (isBatchFilename = 1) { ; This is where the Batch output stuff happens.
 	OutputFilename := "./Batch-Output/output_" . zeropad . ".avi"	
 }
 
-MECommand := cmd.exe /k "mencoder " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
+
+
+MECommand := cmd.exe /k "mencoder " . MEncoderOptions . " " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config
   ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
 MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
 
+
+
+;Remove any extra avi made by the reverse video filter.
+CheckFile := InputFolder . "\output2.avi"
+if FileExist(CheckFile) {
+	FileDelete, %InputFolder%/output2.avi
+}
+
+;Remove any extra baked yuv output files after compression.
+CheckFile := OutputFolder . "\ImBaked.yuv"
+if FileExist(CheckFile) {
+	FileDelete, %OutputFolder%/ImBaked.yuv
+}
+
 If RegExMatch(MEoutput,"(Compressor doesn't have a configure dialog)") else IF RegExMatch(MEoutput,"(Compressor configure dialog failed!)")  {
 	msgbox, Looks like the compressor lacks a configuration dialog or it failed, disabling.
 	config := ""
-	MECommand := cmd.exe /k "mencoder " . chr(0x22) SourceFile . chr(0x22) . ResolutionVar . " -of avi -o output.avi -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
+	MECommand := cmd.exe /k "mencoder " . chr(0x22) SourceFile . chr(0x22) . ResolutionVar . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
 	MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
+	;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
+	
 	
 	
 	IF RegExMatch(MEoutput,"(failed)") else IF RegExMatch(MEoutput,"(not aligned)") {
@@ -555,7 +1184,7 @@ AMV2BufferWatermark2 := " -sws 4 -vf scale=1280:720,expand=0:-170:0:0,scale=1280
 AMV2BufferWatermark3 := " -sws 4 -vf scale=3840:2160,expand=0:-330:0:0,scale=3840:2160"
 
 
-;Crops out the isolated watermark
+;Crops out the isolated watermark, used during baking. Left here for reference.
 ;AMV2RemoveWatermark1 := "-vf crop=640:300:0:60"
 ;AMV2RemoveWatermark2 := "-vf crop=1280:580:0:140"
 ;AMV2RemoveWatermark3 := " -vf crop=3840:1860:0:290"
@@ -563,6 +1192,15 @@ AMV2BufferWatermark3 := " -sws 4 -vf scale=3840:2160,expand=0:-330:0:0,scale=384
 
 gosub, EnableForceRate
 gosub, EnableForceRes
+
+if (UseOtherOptions = 0) { ;Remove the extra options/Reversible filters, if disabled.
+	EncodeReversibleFilterVal := ""
+	DecodeReversibleFilterVal := ""
+}
+
+if (ForceRes = 1) && if (UseOtherOptions = 1) {
+	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
+}
 
 msgbox, Testing Custom AMV compression, removing watermark, etc.
 ;Select Preset for now.
@@ -609,12 +1247,16 @@ Return
 
 ListCodecOptions:
 Gui, Submit, NoHide
-msgbox, Here's the options you can use for the %FFmpegCodecs% codec.
+msgbox, These are the options you can use for the %FFmpegCodecs% codec.
 GetOptions := "ffmpeg -h encoder=" . FFmpegCodecs
 runwait, cmd.exe /k %GetOptions%
 Return
 
 PreFFmpegCompression:
+if (SourceFile = "") && (WebcamCompression = 0) {
+	msgbox, uhhh you didn't select a video source???
+}
+
 if (IsBatchInput = 0) {
 	goto, FFmpegCompression
 	Return
@@ -645,12 +1287,16 @@ GuiControl, 1:Disable, TomatoRecycle
 
 OutputFilename := "./FFmpeg-Output/" . FFmpegCodecs .  "/output.avi"
 RecompressVar := "FFmpeg"
+EncodeReversibleFilterVal := ""
+DecodeReversibleFilterVal := ""
 
 gosub, WebCamCompression
-gosub, EnableForceRate
+gosub, EnableReverseVideo
 gosub, EnableForceRes
 gosub, VideoQualitySlider ; For some reason I had to place this here or else the VideoQuality var lost its decimal.
-;msgbox, %VideoQuality%
+gosub, GetFilters
+gosub, EnableForceRate
+gosub, GetFilterOptionsAndFixStrings
 
 if (SourceFile = "") {
 	msgbox, Select Something Yo.
@@ -665,7 +1311,8 @@ if (isBatchFilename = 1) {
 }
 
 
-FFCommand := ComSpec . " /c " . " ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VideoQuality . " " . FFmpegOptions . " " . OutputFilename . " -y"
+
+FFCommand := ComSpec . " /c " . " ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " " . OutputFilename . " -y"
   ;MsgBox, %FFCommand%
 
   ;Execute FFmpeg Here, also reads Standard Error Output.
@@ -674,6 +1321,20 @@ FFoutput := ComObjCreate("WScript.Shell").Exec(FFCommand).StdErr.ReadAll()
 ;This trims all the extra bullshit the FFmpeg devs didnt omit from Standard Error Output(STDERR).
 StartingPos := InStr(FFoutput, "[")
 FFoutput := SubStr(FFoutput, StartingPos + 25)
+
+
+
+;Remove any extra avi made by the reverse video filter.
+CheckFile := InputFolder . "\output2.avi"
+if FileExist(CheckFile) {
+	FileDelete, %InputFolder%/output2.avi
+}
+
+;Remove any extra baked yuv output files after compression.
+CheckFile := OutputFolder . "\ImBaked.yuv"
+if FileExist(CheckFile) {
+	FileDelete, %OutputFolder%/ImBaked.yuv
+}
 
 IF RegExMatch(FFoutput,"(The specified picture size)") else IF RegExMatch(FFoutput,"(maybe incorrect parameters)") {
 	msgbox, oshit an error, my first guess is video resolution is probably wrong.`n%FFoutput%
@@ -718,11 +1379,14 @@ if (ResolutionVar = " -vf scale=") {
 	return
 }
 
-FFCommand := cmd.exe /k "ffmpeg -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VideoQuality . " " . FFmpegOptions . " output.avi -y"
+
+FFCommand := cmd.exe /k "ffmpeg -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " output.avi -y"
    ;MsgBox, %FFCommand%
 
-  ;Execute MEncoder Here, also reads Standard Error Output.
+  ;Execute FFmpeg Here, also reads Standard Error Output.
 FFoutput := ComObjCreate("WScript.Shell").Exec(FFCommand).StdErr.ReadAll()
+
+
 IF RegExMatch(FFoutput,"(The specified picture size)") else IF RegExMatch(FFoutput,"(maybe incorrect parameters)") {
 	;This trims all the extra bullshit the FFmpeg devs didnt omit from Standard Error Output(STDERR).	
 	StartingPos := InStr(FFoutput, "[")
@@ -767,11 +1431,16 @@ if (ResolutionVar = " -vf scale=") {
 	return
 }
 
+
+
 MECommand := cmd.exe /c "mencoder " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -of avi -o output.avi -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
    ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
 MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
+
+
+
 If RegExMatch(MEoutput,"(ICCompressQuery failed)") else IF RegExMatch(MEoutput,"(FATAL)") else IF RegExMatch(MEoutput,"(failed)") else IF RegExMatch(MEoutput,"(not aligned)")  {
 	msgbox, it failed, again. `n`n %MEoutput% `n`n %ResolutionVar%
 	gosub, MERetryScale
@@ -813,22 +1482,15 @@ return
 BatchME:
 ;Gui, Submit, NoHide
 FileCreateDir, %A_ScriptDir%\Batch-Output
-;FileSelectFolder,leFolder, *%A_ScriptDir%,3,Select The Input Folder.....................
-;if errorlevel {
-;	msgbox, You Didnt Select Anything lol
-;	return
-;}  
 
 extensions := "mp4,webm,avi,mkv,yuv"
 
 Loop,%leFolder%\*
-{  ; count the amount of target files in folder so we can stop loop properly.
+{  ; count the amount of target files in folder so we can stop the loop properly.
 	if A_LoopFileExt in %extensions%		
-	     countfiles += 1
+		countfiles += 1
 	stoploop := countfiles
 }
-
-;msgbox, %stoploop%
 
 Loop,%leFolder%\*
 {
@@ -843,28 +1505,24 @@ Loop,%leFolder%\*
 	}
 	if (A_Index = stoploop) {
 		msgbox, o shit its done, now you can datamosh all them files.
-	;	gosub, ConcatenateMe
+		
 		isBatchFilename := 0
 		countfiles := 0
 		fileVal := 0
 		zeropad := ""
+		
 		gosub, CommenceBatchTomatoDatamosh
 		break
 	}
 }
 if ErrorLevel {
-     msgbox, FUCK you did it now, didn't you?
+	msgbox, FUCK you did it now, didn't you?
 }
 return
 
 BatchFF:
 ;Gui, Submit, NoHide
 FileCreateDir, %A_ScriptDir%\Batch-Output
-;FileSelectFolder,leFolder, *%A_ScriptDir%,3,Select The Input Folder.....................
-;if errorlevel {
-;	msgbox, You Didnt Select Anything lol
-;	return
-;}  
 
 extensions := "mp4,webm,avi,mkv,yuv"
 
@@ -874,10 +1532,6 @@ Loop,%leFolder%\*
 		countfiles += 1
 	stoploop := countfiles
 }
-
-
-;msgbox, %stoploop%
-
 
 Loop,%leFolder%\*
 {
@@ -892,17 +1546,18 @@ Loop,%leFolder%\*
 	}
 	if (A_Index = stoploop) {
 		msgbox, o shit its done, now you can datamosh all them files.
-	;	gosub, ConcatenateMe
+		
 		isBatchFilename := 0
 		countfiles := 0
 		fileVal := 0
 		zeropad := ""
+		
 		gosub, CommenceBatchTomatoDatamosh
 		break
 	}
 }
 if ErrorLevel {
-     msgbox, FUCK you did it now, didn't you?
+	msgbox, FUCK you did it now, didn't you?
 }
 return
 
@@ -966,10 +1621,11 @@ if (WeGotPython = 1) {
 regread, python, HKLM, SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\python.exe
 if (python = "") else if !RegExMatch(python,"(Python27)")  {
 	msgbox, Enter your Python27 Path/Folder.`n`nIts usually like "C:\Python27"
+	Gui, 10:Color, DDCEE9	
 	Gui 10:Add, Edit, x0 y8 w120 h21 vCustomPythonPath,
 	Gui 10:Add, Button, x0 y50 w120 h21 gSubmitPythonLocation, ok
 	Gui 10:-sysmenu	
-	Gui 10:Show, w120 h100, Paste le Path Here
+	Gui 10:Show, w120 h80, Paste le Path Here
 	WeGotPython := ""
 	WinWaitClose, Paste le Path Here
 	return
@@ -982,12 +1638,30 @@ If RegExMatch(python,"(Python27)")
 }
 Return
 
+EnableForcePythonLocation:
+GuiControlGet, PythonLocationIsOn
+if (PythonLocationIsOn = 1) {
+	gosub, ForcePythonLocation
+	Return
+}
+
+if (PythonLocationIsOn = 0) {
+	;If disabled it reads the python location from the registry instead.
+	regread, pythonLoc, HKLM, SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\python.exe
+	python := pythonLoc
+	msgbox, Disabled Forced Python Location!
+	Return
+}
+Return
+
+
 ForcePythonLocation:
 msgbox, Enter your Python27 Path/Folder.`n`nIts usually like "C:\Python27"
+Gui, 10:Color, DDCEE9
 Gui 10:Add, Edit, x0 y8 w120 h21 vCustomPythonPath,
-Gui 10:Add, Button, x0 y50 w120 h21 gSubmitPythonLocation, ok
+Gui 10:Add, Button, x10 y50 w100 h21 gSubmitPythonLocation, ok
 Gui 10:-sysmenu
-Gui 10:Show, w120 h100, Paste le Path Here
+Gui 10:Show, w120 h80, Paste le Path Here
 WeGotPython := 1
 WinWaitClose, Paste le Path Here
 return
@@ -1005,7 +1679,8 @@ TomatoHalp:
 msgbox, 
 (
 COMPRESS A SOURCE WITH EITHER OF THE "GO" BUTTONS, FIRST!
-
+           -c is FRAME COUNT & -n is FRAME POSITION, btw.
+===========================================
 Take out all iframes except for the first one:
 python tomato.py -i input.avi -m ikill output.avi
 
@@ -1021,12 +1696,14 @@ python tomato.py -i input.avi -m shuffle output.avi
 Copy 4 frames taken starting from every 2nd frame. 
 i.e [1 2 3 4 3 4 5 6 5 6 7 8 7 8...]:
 python tomato.py -i input.avi -m overlapped -c 4 -n 2 output.avi
-
+===========================================
 
 )
 Return
 
-
+!F7::
+msgbox, %oython%
+return
 
 OutputLocation:
 if (RecompressVar = "FFmpeg") {
@@ -1058,23 +1735,28 @@ if (RecompressVar = "MEncoder") && if (isBatchInput = 1) {
 	FileCreateDir, %OutputFolder%
 	;msgbox, %OutputFolder%
 }
-
 Return
 
 
 
 CommenceTomatoDatamosh:
-;Destroy AVI Index via Tomato for Datamoshed Goodness!
+;Destroy AVI Index via Tomato for Datamoshed Goodness!!!
 Gui, Submit, Nohide
 
 gosub, CustomCodecShit
 gosub, TestPython
 gosub, OutputLocation
 
-LemmeSeeIt := "mplayer " . CustomCodecFix . " " . OutputFolder . "/output-moshed.avi -loop 0"
+LemmeSeeIt := "mplayer " . CustomCodecFix . " " . OutputFolder . "\output-moshed.avi -loop 0"
+
+;Remove the datamoshed avi if it existms before using Tomato to Datamosh, to avoid file conflicts.
+CheckMe := OutputFolder . "\output-moshed.avi"
+if FileExist(CheckMe) {
+	FileDelete,%CheckMe%
+}
 
 runwait, %ComSpec% /c %python% tomato.py -i %InputFolder%/output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed.avi
-runwait, %LemmeSeeIt%
+runwait, %ComSpec% /c %LemmeSeeIt%
 ;open custom baking menu afterwards
 BakeGUI()
 
@@ -1135,7 +1817,7 @@ Loop,%A_ScriptDir%\Batch-Output\*.avi
 		gosub, CustomCodecShit
 		gosub, TestPython
 		Runit := ComSpec . " /c " . python . " tomato.py -i " . chr(0x22) . sourceFile . chr(0x22) . " -m " . TomatoMode . " -c "  . TomatoFrameCount . " -n  " . TomatoFramePosition . FileLocation
-          runwait, %Runit%
+		runwait, %Runit%
 	}
 	if (A_Index = stoploop) {
 	;	msgbox, o shit its done, now you can join all them videos.
@@ -1162,12 +1844,13 @@ Loop,%A_ScriptDir%\Batch-Output\*.avi
 			countfiles := 0
 			
 			LemmeSeeItBatch := "mplayer " . ConcatString
-		     runwait, %LemmeSeeItBatch%
+			runwait, %LemmeSeeItBatch%
 			
 			BakeGUI()
 			WinWaitClose, Shall We Bake Some More???
 			GuiControl, 1:Enable, TomatoRecycle
 			GuiControl, 1:Enable, Recompress
+			BatchBake := 0
 			break
 		}
 	}
@@ -1182,19 +1865,24 @@ SourceFile := OutputFolder . "\output-moshed.avi"
 
 if (RecompressVar = "MEncoder") {
 	msgbox, Compressing the moshed file,`nwith the current MEncoder vfw codec selected!
+	isRecompressed := 1
 	gosub, MEncoderCompression
+	isRecompressed := 0
 	return
 }
 
 if (RecompressVar = "FFmpeg") {
 	msgbox, Compressing the moshed file, `nwith the current FFmpeg codec selected!
+	isRecompressed := 1	
 	gosub, FFmpegCompression
+	isRecompressed := 0
 	return
 }
 
 if (RecompressVar = "AMV") {
 	msgbox, Compressing the moshed file,`nwith the beta AMV2 Watermark removal!
 	gosub, CustomAMVCompression
+	isRecompressed := 0
 	return
 }
 Return
@@ -1228,14 +1916,14 @@ if (BatchBake = 1) {
 }
 
 
-CheckItOut := "ffplay -i " . DirName . "\" . whichCodec . "\%08d.png -loop 0"
-PNGBake := "mplayer -vo png:outdir=PNG-Output\" . whichCodec . " -cache 1024 " . CustomCodecFix . OutputFolder . inputFile
+CheckItOut := ComSpec . " /c " . "ffplay -i " . DirName . "\" . whichCodec . "\%08d.png -loop 0"
+PNGBake := ComSpec . " /c " . "mplayer -vo png:outdir=PNG-Output\" . whichCodec . " -cache 1024 " . " -sws 4 " . DecodeReversibleFilterVal . " " . CustomCodecFix . OutputFolder . inputFile
 
 runwait, %PNGBake%
 sleep, 20
 WinWaitClose, cmd
 
-runwait, cmd.exe /c %CheckItOut%
+runwait, %CheckItOut%
 ;FileDelete, %OutputFolder%\output-moshed.avi
 
 run, %A_ScriptDir%\%DirName%\%whichCodec%
@@ -1250,6 +1938,7 @@ FileDelete, ImBaked.mp4
 gosub, CustomCodecShit ;Temporary fix for HEVC/H265 decoding.
 gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
 
+BakedFilename := "ImBaked.mp4"
 inputFile := "\output-moshed.avi "
 if (BatchBake = 1) {
 	inputFile := " " . ConcatString . " "
@@ -1257,9 +1946,9 @@ if (BatchBake = 1) {
 	OutputFolder := ""
 }
 
-MP4Bake := "mencoder " . CustomCodecFix . " " . OutputFolder . inputFile " -ovc x264 -x264encopts crf=1.0 " . MEncoderOptions " -o " . OutputFolder . BakedOutputFolder . "\ImBaked.mp4 -of lavf"
-;msgbox, %MP4Bake%
+MP4Bake := ComSpec . " /k " "mencoder " . CustomCodecFix . " " . OutputFolder . inputFile . " -sws 4 " . DecodeReversibleFilterVal . " -ovc x264 -x264encopts crf=1.0 " . MEncoderOptions " -o " . OutputFolder . BakedOutputFolder . "\" . BakedFilename . " -of lavf"
 
+msgbox, %MP4Bake%
 runwait, %MP4Bake%
 sleep, 20
 WinWaitClose, cmd
@@ -1269,6 +1958,8 @@ runwait, %LetseeIt%
 
 ;Clear the concat string.
 ConcatString := ""
+
+gosub, EnableGetDifference
 Return
 
 PlsBakeYUV:
@@ -1288,14 +1979,18 @@ if (BatchBake = 1) {
 	OutputFolder := ""
 }
 
-YUVBake := "mplayer " . CustomCodecFix . " -vo yuv4mpeg " . OutputFolder . inputFile
-msgbox, %YUVBake%
+YUVBake := "mplayer " . CustomCodecFix . " -sws 4 " . DecodeReversibleFilterVal . " " . " -vo yuv4mpeg " . OutputFolder . inputFile
+;msgbox, %YUVBake%
 runwait, %YUVBake%
 sleep, 20
 WinWaitClose, cmd
 FileMove, stream.yuv,  %OutputFolder%\ImBaked.yuv
 runwait, cmd.exe /c ffplay -i  %OutputFolder%\ImBaked.yuv -loop 0
 ;FileDelete, %OutputFolder%\output-moshed.avi
+
+BakedFilename := "ImBaked.yuv"
+gosub, UnReverseVideo
+gosub, EnableGetDifference
 Return
 
 
@@ -1303,10 +1998,8 @@ NoReBake:
 Gui, 3:Destroy
 Return
 
-
-
+;Press Escape to kill GUI.
 GuiEscape:
 GuiClose:
 ExitApp
-
 
