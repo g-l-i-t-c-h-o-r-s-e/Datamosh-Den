@@ -1,5 +1,5 @@
 
-# MESSING AROUND WITH A NEW VERSION THAT AUTOMATICALLY DOWNLOADS, UNZIPS AND FINDS MOST OF THE FILES YOU NEED.
+# HOPEFULLY THIS WORKS FOR EVERYONE, IF SO BEHOLD THE ALMOST OFFICIAL BUILD
 You will still need to grab 7zip from https://www.7-zip.org/ i. e [here](https://www.7-zip.org/a/7z1900.exe)                            
 as well as Python 2.7.16   [found here](https://www.python.org/downloads/release/python-2716/)                                                   
 Read [the wiki](https://github.com/g-l-i-t-c-h-o-r-s-e/Datamosh-Den/wiki/Halp) if you need help, or PM me :>
@@ -8,7 +8,7 @@ Read [the wiki](https://github.com/g-l-i-t-c-h-o-r-s-e/Datamosh-Den/wiki/Halp) i
 Ohey me again with another wacky script i conjured up in AutoHotkey Version 1.1.30.03 :b             
 Hopefully this will make Datamoshing more accesible to people on Windows who aren't familiar with the command line.
 
-![img1](https://i.imgur.com/gV2SPxT.png)
+![img1](https://i.imgur.com/ulJWtuI.png)
 
 # Features 
 • Quick video playback of the datamoshed avi
@@ -22,6 +22,13 @@ Hopefully this will make Datamoshing more accesible to people on Windows who are
 • Repeatedly iterate different datamosh settings on the same file via Remosh 
 
 • Compress the datamoshed avi again with a new codec to stack compression artifacts!
+
+• Reversible filters you can apply via Encode and or Decode (hue, transpose, flip, reverse, etc).
+
+• Sync Datamoshed Video back to the original duration and optionally mix the original audio back in!
+
+• Probably more I haven't mentioned idk
+
 
 # Because github won't let me upload big ass files, you'll need to grab a copy of FFmpeg and FFplay yourself from [here]( https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.2.1-win64-static.zip)
 Version 3.3.2 has some codecs and filters the newest one doesnt have anymore (libxavs, frei0r, etc) might wanna [try that out too.]( https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-3.3.2-win64-static.zip)                            
