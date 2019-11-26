@@ -133,9 +133,9 @@ WebcamCompression := "0"
 Gui Show, w485 h363, Datamosh Den - Ver 1.8.3 (Beta)
 
 ;Check if newer MEncoder package is in folder, if so extract it.
-#Include config/GetFFmpeg.ahk
-#Include config/unzip.ahk
-#Include config/GetDifference.ahk
+#Include config\GetFFmpeg.ahk
+#Include config\unzip.ahk
+#Include config\GetDifference.ahk
 Return
 
 
@@ -1938,6 +1938,7 @@ FileDelete, ImBaked.mp4
 gosub, CustomCodecShit ;Temporary fix for HEVC/H265 decoding.
 gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
 
+TempMencoderOptions := "-nosound -noskip" ;NoSkip prevents duplicate/frozen frames on mp4 output.
 BakedFilename := "ImBaked.mp4"
 inputFile := "\output-moshed.avi "
 if (BatchBake = 1) {
@@ -1946,7 +1947,7 @@ if (BatchBake = 1) {
 	OutputFolder := ""
 }
 
-MP4Bake := ComSpec . " /k " "mencoder " . CustomCodecFix . " " . OutputFolder . inputFile . " -sws 4 " . DecodeReversibleFilterVal . " -ovc x264 -x264encopts crf=1.0 " . MEncoderOptions " -o " . OutputFolder . BakedOutputFolder . "\" . BakedFilename . " -of lavf"
+MP4Bake := ComSpec . " /c " "mencoder " . CustomCodecFix . " " . OutputFolder . inputFile . " -sws 4 " . DecodeReversibleFilterVal . " -ovc x264 -x264encopts crf=1.0 " . TempMencoderOptions " -o " . OutputFolder . BakedOutputFolder . "\" . BakedFilename . " -of lavf"
 
 msgbox, %MP4Bake%
 runwait, %MP4Bake%
