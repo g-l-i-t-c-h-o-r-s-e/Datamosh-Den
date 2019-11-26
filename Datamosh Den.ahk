@@ -1949,7 +1949,7 @@ if (BatchBake = 1) {
 
 MP4Bake := ComSpec . " /c " "mencoder " . CustomCodecFix . " " . OutputFolder . inputFile . " -sws 4 " . DecodeReversibleFilterVal . " -ovc x264 -x264encopts crf=1.0 " . TempMencoderOptions " -o " . OutputFolder . BakedOutputFolder . "\" . BakedFilename . " -of lavf"
 
-msgbox, %MP4Bake%
+;msgbox, %MP4Bake%
 runwait, %MP4Bake%
 sleep, 20
 WinWaitClose, cmd
