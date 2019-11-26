@@ -261,7 +261,6 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 				
 			;Extract Audio via MEncoder, since the seeking seems to snap to keyframes in contrast to FFmpegs frame accurate seeking.
 				ExtractAudio := ComSpec . " /k mencoder -ss " . SeekVar . " " . chr(0x22) . sourceFile1 . chr(0x22) . " -oac mp3lame -ovc frameno -o " . InputFolder . "\ExtractedAudio.avi "
-				msgbox, %ExtractAudio%
 				runwait, %ExtractAudio%
 				sleep, 10
 				NewAudioFile :=  InputFolder . "\ExtractedAudio.avi "
