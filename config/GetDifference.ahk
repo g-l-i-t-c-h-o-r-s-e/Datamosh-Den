@@ -3,6 +3,9 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 ;So that we can then divide the glitched videos duration with the original duration to get the difference between the two
 ;That way we can sync the glitched video back to the original videos duration, and optionally add the audio back.
 
+RemovedAudio := InputFolder . "\ExtractedAudio.avi"
+FileDelete, %RemovedAudio%
+sleep, 10
 
 EnableGetDifference:
 if (DisableGetDifferencePls = 1) {
@@ -25,20 +28,9 @@ EndVar := ""
 sourceFile1 := DefaultSourceFile
 sourceFile2 := InputFolder . "\Moshed\" . BakedFilename
 
-;if (UnReverseCompression = 1) {
-;	msgbox, lets unreverse??
-;	sourceFile2 := InputFolder . "\unreversed-output.avi"
-;	
-;}
 
-Test1 := !RegExMatch(MEncoderOptions,"( -ss )")
-Test2 := !RegExMatch(FFmpegOptions,"( -ss )")
-;Test3 := RegExMatch(MEncoderOptions,"( -ss )")
-;Test4 := RegExMatch(FFmpegOptions,"( -ss )")
-;Default Difference calculations.
- ;if !RegExMatch(MEncoderOptions,"( -ss )") else if RegExMatch(MEncoderOptions,"( -ss )") && !RegExMatch(FFmpegOptions,"( -ss )") {
-
-;msgbox, %Test1%`n%Test2%`n%Test3%`n%Test4%
+Test1 := !RegExMatch(MEncoderOptions,"( -ss )") ;Temp Fix
+Test2 := !RegExMatch(FFmpegOptions,"( -ss )") ;Temp Fix
 
 if (Test1 = 1) && (Test2 = 1) {
 
@@ -104,12 +96,16 @@ if RegExMatch(MEncoderOptions,"( -endpos )") else if RegExMatch(FFmpegOptions,"(
 	}
 	
 	if (RecompressVar = "FFmpeg") {
-		OptionArray := StrSplit(FFmpegOptions, "-")	
+		OptionArray := StrSplit(FFmpegOptions, "-")
 	}
 	
 	Loop % OptionArray.MaxIndex()
 	{
 		this_option := " -" . OptionArray[A_Index]
+		if RegExMatch(this_option, "-ss") {
+			SeekVar := this_option
+			SeekVar := RegExReplace(SeekVar, "-ss", "")
+		}
 		
 		if RegExMatch(this_option, "-endpos") or RegExMatch(this_option, "-t") {
 			EndVar := this_option
@@ -130,6 +126,15 @@ if RegExMatch(MEncoderOptions,"( -endpos )") else if RegExMatch(FFmpegOptions,"(
 			Difference := Calculate
 			Difference := StrReplace(Difference, "`r`n", "") ;Removes linebreak and shit.
 			
+			;if (RecompressVar = "MEncoder") && RegExMatch(MEncoderOptions,"( -ss )") {
+				
+			;Extract Audio via MEncoder, since the seeking seems to snap to keyframes in contrast to FFmpegs frame accurate seeking.
+			;	ExtractAudio := ComSpec . " /k mencoder -ss " . SeekVar . " -endpos " . EndVar . " " . chr(0x22) . sourceFile1 . chr(0x22) . " -oac mp3lame -ovc frameno -o " . InputFolder . "\ExtractedAudio.avi "
+			;	msgbox, %ExtractAudio%
+			;	runwait, %ExtractAudio%
+			;	msgbox, done
+			;	NewAudioFile :=  InputFolder . "\ExtractedAudio.avi "
+			;}
 			
 			Haystack := Difference
 			Needle := "."
@@ -174,7 +179,7 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 	}
 	
 	if (RecompressVar = "FFmpeg") {
-		OptionArray := StrSplit(FFmpegOptions, "-")	
+		OptionArray := StrSplit(FFmpegOptions, "-")			
 	}
 	
 	Loop % OptionArray.MaxIndex()
@@ -183,67 +188,151 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 		
 		if RegExMatch(this_option, " -ss ") {
 			SeekVar := this_option
-			SeekVar := RegExReplace(SeekVar, "-ss", "")	
+			SeekVar := RegExReplace(SeekVar, "-ss", "")
 			
+			if (RecompressVar = "FFmpeg") {
+				;OptionArray := StrSplit(FFmpegOptions, "-")
+								
+				
 			;Get Original Video Duration
-			OriginalVideo := ComSpec . " /c ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . chr(0x22) . sourceFile1 . chr(0x22)
-			GetDuration1 := ComObjCreate("WScript.Shell").Exec(OriginalVideo).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
-			OriginalDuration := GetDuration1
-			StringTrimRight, OriginalDuration, OriginalDuration, 5 ;Remove extra unneeded numbers
+				OriginalVideo := ComSpec . " /c ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . chr(0x22) . sourceFile1 . chr(0x22)
+				GetDuration1 := ComObjCreate("WScript.Shell").Exec(OriginalVideo).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
+				OriginalDuration := GetDuration1
+				StringTrimRight, OriginalDuration, OriginalDuration, 5 ;Remove extra unneeded numbers
 			;msgbox, %OriginalDuration%
-			
-			
+				
+				
 			;Get Glitched video duration
-			GlitchedVideo := ComSpec . " /c ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . chr(0x22) . sourceFile2 . chr(0x22)
-			GetDuration2 := ComObjCreate("WScript.Shell").Exec(GlitchedVideo).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
-			GlitchedDuration := GetDuration2
-			StringTrimRight, GlitchedDuration, GlitchedDuration, 5 ;Remove extra unneeded numbers
+				GlitchedVideo := ComSpec . " /c ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . chr(0x22) . sourceFile2 . chr(0x22)
+				GetDuration2 := ComObjCreate("WScript.Shell").Exec(GlitchedVideo).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
+				GlitchedDuration := GetDuration2
+				StringTrimRight, GlitchedDuration, GlitchedDuration, 5 ;Remove extra unneeded numbers
 			;msgbox, %GlitchedDuration%
-			
-			
+				
+				
 			;Subtract how far you seeked into the video. from the original duration.
-			Workaround1 := ComSpec . " /c echo (" . OriginalDuration . "-" . SeekVar . ") | bc -l "
-			Calculate1 := ComObjCreate("WScript.Shell").Exec(Workaround1).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
-			Difference1 := Calculate1
-			NewDuration := StrReplace(Difference1, "`r`n", "") ;Removes linebreak and shit.
+				Workaround1 := ComSpec . " /c echo (" . OriginalDuration . "-" . SeekVar . ") | bc -l "
+				Calculate1 := ComObjCreate("WScript.Shell").Exec(Workaround1).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
+				Difference1 := Calculate1
+				NewDuration := StrReplace(Difference1, "`r`n", "") ;Removes linebreak and shit.
 			;msgbox, %NewDuration%
-			
-			
+				
+				
+				
 			;Perform difference calculations
-			Workaround2 := ComSpec . " /c echo (" . NewDuration . "/" . GlitchedDuration . ") | bc -l "
-			Calculate2 := ComObjCreate("WScript.Shell").Exec(Workaround2).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
-			Difference2 := Calculate2
-			Difference2 := StrReplace(Difference2, "`r`n", "") ;Removes linebreak and shit.
-			
-			Haystack := Difference2
-			Needle := "."
-			StringGetPos, pos, Haystack, %Needle%
-			if (pos = 0) {
-	               ;MsgBox, Adding a "0" to the beginning of string.
-				Difference2 := "0" . Difference2 ; Places a 0 at the beginning of string for FFmpeg's sake.
+				Workaround2 := ComSpec . " /c echo (" . NewDuration . "/" . GlitchedDuration . ") | bc -l "
+				Calculate2 := ComObjCreate("WScript.Shell").Exec(Workaround2).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
+				Difference2 := Calculate2
 				Difference2 := StrReplace(Difference2, "`r`n", "") ;Removes linebreak and shit.
 				
-				ApplyDifference := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . sourceFile2 . chr(0x22) . " -c:v huffyuv -vf setpts=" . Difference2 . "*PTS " . OutputFolder . "\output-moshed-synced.avi -y"
-				ViewDifference := ComSpec . " /c " . " ffplay -i " . OutputFolder . "\output-moshed-synced.avi"
-				
-				runwait, %ApplyDifference%
-				runwait, %ViewDifference%
-				
-				if (DisableMixAudioPls = 1) {
-					Return
+				Haystack := Difference2
+				Needle := "."
+				StringGetPos, pos, Haystack, %Needle%
+				if (pos = 0) {
+	               ;MsgBox, Adding a "0" to the beginning of string.
+					Difference2 := "0" . Difference2 ; Places a 0 at the beginning of string for FFmpeg's sake.
+					Difference2 := StrReplace(Difference2, "`r`n", "") ;Removes linebreak and shit.
+					
+					ApplyDifference := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . sourceFile2 . chr(0x22) . " -c:v huffyuv -vf setpts=" . Difference2 . "*PTS " . OutputFolder . "\output-moshed-synced.avi -y"
+					ViewDifference := ComSpec . " /c " . " ffplay -i " . OutputFolder . "\output-moshed-synced.avi"
+					
+					runwait, %ApplyDifference%
+					runwait, %ViewDifference%
+					
+					
+					if (DisableMixAudioPls = 1) {
+						Return
+					}
+					
+					WinWaitClose, cmd
+					Gui Difference4:Add, Text, x13 y7 w178 h16, Mix Original Audio Back Into Video?
+					Gui Difference4:Add, Button, x18 y24 w80 h23 gMixAudioPles, hell yes
+					Gui Difference4:Add, Button, x98 y24 w80 h23 gNoGetDifference, no pls
+					Gui Difference4:Add, CheckBox, x37 y55 w120 h23 gDisableMixAudio, ok but dont ask again
+					Gui Difference4:Show, w199 h88, Window
+					
+					Return	
 				}
 				
-				WinWaitClose, cmd
-				Gui Difference4:Add, Text, x13 y7 w178 h16, Mix Original Audio Back Into Video?
-				Gui Difference4:Add, Button, x18 y24 w80 h23 gMixAudioPles, hell yes
-				Gui Difference4:Add, Button, x98 y24 w80 h23 gNoGetDifference, no pls
-				Gui Difference4:Add, CheckBox, x37 y55 w120 h23 gDisableMixAudio, ok but dont ask again
-				Gui Difference4:Show, w199 h88, Window
+			}
+			
+			;If you're using MEncoder for this we have to use a different approach.
+			if (RecompressVar = "MEncoder") {
 				
-				Return	
+			;Extract Audio via MEncoder, since the seeking seems to snap to keyframes in contrast to FFmpegs frame accurate seeking.
+				ExtractAudio := ComSpec . " /k mencoder -ss " . SeekVar . " " . chr(0x22) . sourceFile1 . chr(0x22) . " -oac mp3lame -ovc frameno -o " . InputFolder . "\ExtractedAudio.avi "
+				msgbox, %ExtractAudio%
+				runwait, %ExtractAudio%
+				sleep, 10
+				NewAudioFile :=  InputFolder . "\ExtractedAudio.avi "
+				;msgbox, %NewAudioFile%
+				
+				
+			;Get Original Video Duration
+				OriginalVideo := ComSpec . " /c ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . chr(0x22) . NewAudioFile . chr(0x22)
+				GetDuration1 := ComObjCreate("WScript.Shell").Exec(OriginalVideo).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
+				OriginalDuration := GetDuration1
+				StringTrimRight, OriginalDuration, OriginalDuration, 5 ;Remove extra unneeded numbers
+				;msgbox, %OriginalDuration%
+				
+				
+			;Get Glitched video duration
+				GlitchedVideo := ComSpec . " /c ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . chr(0x22) . sourceFile2 . chr(0x22)
+				GetDuration2 := ComObjCreate("WScript.Shell").Exec(GlitchedVideo).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
+				GlitchedDuration := GetDuration2
+				StringTrimRight, GlitchedDuration, GlitchedDuration, 5 ;Remove extra unneeded numbers
+				;msgbox, %GlitchedDuration%
+				
+			;I Dont think this is needed for the MEncoder syncing method.	
+			;Subtract how far you seeked into the video. from the original duration.
+			;	Workaround1 := ComSpec . " /c echo (" . OriginalDuration . "-" . SeekVar . ") | bc -l "
+			;	Calculate1 := ComObjCreate("WScript.Shell").Exec(Workaround1).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
+			;	Difference1 := Calculate1
+			;	NewDuration := StrReplace(Difference1, "`r`n", "") ;Removes linebreak and shit.
+			;msgbox, %NewDuration%
+				
+				
+				
+			;Perform difference calculations
+				Workaround2 := ComSpec . " /c echo (" . OriginalDuration . "/" . GlitchedDuration . ") | bc -l "
+				Calculate2 := ComObjCreate("WScript.Shell").Exec(Workaround2).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
+				Difference2 := Calculate2
+				Difference2 := StrReplace(Difference2, "`r`n", "") ;Removes linebreak and shit.
+				;msgbox, %Difference2%
+				
+				Haystack := Difference2
+				Needle := "."
+				StringGetPos, pos, Haystack, %Needle%
+				if (pos = 0) {
+	               ;MsgBox, Adding a "0" to the beginning of string.
+					Difference2 := "0" . Difference2 ; Places a 0 at the beginning of string for FFmpeg's sake.
+					Difference2 := StrReplace(Difference2, "`r`n", "") ;Removes linebreak and shit.
+					
+					ApplyDifference := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . sourceFile2 . chr(0x22) . " -c:v huffyuv -vf setpts=" . Difference2 . "*PTS " . OutputFolder . "\output-moshed-synced.avi -y"
+					ViewDifference := ComSpec . " /c " . " ffplay -i " . OutputFolder . "\output-moshed-synced.avi"
+					
+					runwait, %ApplyDifference%
+					runwait, %ViewDifference%
+					
+					
+					if (DisableMixAudioPls = 1) {
+						Return
+					}
+					
+					WinWaitClose, cmd
+					Gui Difference4:Add, Text, x13 y7 w178 h16, Mix Original Audio Back Into Video?
+					Gui Difference4:Add, Button, x18 y24 w80 h23 gMixAudioPles, hell yes
+					Gui Difference4:Add, Button, x98 y24 w80 h23 gNoGetDifference, no pls
+					Gui Difference4:Add, CheckBox, x37 y55 w120 h23 gDisableMixAudio, ok but dont ask again
+					Gui Difference4:Show, w199 h88, Window
+					
+					Return	
+				}
+				
 			}
 			
 		}
+		
 	}
 	
 }
@@ -291,12 +380,58 @@ EndVar := ""
 		}
 	}
 
+;If we're using FFmpeg codecs theres no additional need to mix the extracted audio
+;Instead we use FFmpegs frame accurate seeking and just mix the audio from the original video.
+if (RecompressVar = "FFmpeg") {
+
 AudioMix := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . OutputFolder . "\output-moshed-synced.avi" . chr(0x22) . " " . SeekVar . " " . EndVar . " -i " . chr(0x22) . DefaultSourceFile .  chr(0x22) . " -map 0:v -map 1:a -c:v copy -c:a mp3 -q:a 0 " . OutputFolder . "\output-moshed-audio-synced.avi -y"
 ShowSyncedVideo := ComSpec . " /c " . " ffplay -i " . chr(0x22) . OutputFolder . "\output-moshed-audio-synced.avi"
 
 runwait, %AudioMix%
 runwait, %ShowSyncedVideo%
 Return
+
+}
+
+;If the seek flag is used with MEncoder, mix the extracted audio into the datamoshed avi instead.
+;We have to do this because of what I believe MEncoder to be "snapping" to keyframes in a video instead of frame accurate seeking.
+if (RecompressVar = "MEncoder") && RegExMatch(SeekVar, " -ss ") {
+	EndVar := RegExReplace(EndVar, "-t", "-endpos")
+	
+	
+	;Extract Audio via MEncoder, since the seeking seems to snap to keyframes in contrast to FFmpegs frame accurate seeking.
+	ExtractAudio := ComSpec . " /c mencoder " . SeekVar . " " . EndVar . " " . chr(0x22) . sourceFile1 . chr(0x22) . " -oac mp3lame -ovc frameno -o " . InputFolder . "\ExtractedAudio.avi "
+	runwait, %ExtractAudio%
+	NewAudioFile :=  InputFolder . "\ExtractedAudio.avi "
+	
+	NewAudioFile :=  InputFolder . "\ExtractedAudio.avi "
+	EndVar := RegExReplace(EndVar, "-endpos", "-t")
+	
+	
+	AudioMix := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . OutputFolder . "\output-moshed-synced.avi" . chr(0x22) . EndVar . " -i " . chr(0x22) . NewAudioFile .  chr(0x22) . " -map 0:v -map 1:a -c:v copy -c:a mp3 -q:a 0 " . OutputFolder . "\output-moshed-audio-synced.avi -y"
+	ShowSyncedVideo := ComSpec . " /c " . " ffplay -i " . chr(0x22) . OutputFolder . "\output-moshed-audio-synced.avi"
+	
+	runwait, %AudioMix%
+	runwait, %ShowSyncedVideo%
+	NewAudioFile := ""
+	Return
+	
+}
+
+;If there is no seek flag used, we can instead use the original audio source and just cut it where we need to.
+if (RecompressVar = "MEncoder") && !RegExMatch(SeekVar, " -ss ") {
+	;NewAudioFile :=  InputFolder . "\ExtractedAudio.avi "
+	
+	AudioMix := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . OutputFolder . "\output-moshed-synced.avi" . chr(0x22) . EndVar . " -i " . chr(0x22) . DefaultSourceFile .  chr(0x22) . " -map 0:v -map 1:a -c:v copy -c:a mp3 -q:a 0 " . OutputFolder . "\output-moshed-audio-synced.avi -y"
+	ShowSyncedVideo := ComSpec . " /c " . " ffplay -i " . chr(0x22) . OutputFolder . "\output-moshed-audio-synced.avi"
+	
+	runwait, %AudioMix%
+	runwait, %ShowSyncedVideo%
+	NewAudioFile := ""
+	Return
+	
+}
+
 
 
 NoGetDifference:
