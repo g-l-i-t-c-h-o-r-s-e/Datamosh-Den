@@ -2,13 +2,8 @@
 ;SetWorkingDir %A_ScriptDir%
 #SingleInstance Force
 
-IfNotExist, ffmpeg.exe
-{
-	gosub, unzipFF
-     return
-}
+StartUnzip:
 
-unzipME:
 if FileExist("C:\Program Files (x86)\7-Zip\7z.exe") {
 	
 	7z := "C:\Program Files (x86)\7-Zip\7z.exe"
@@ -20,6 +15,27 @@ if FileExist("C:\Program Files\7-Zip\7z.exe") {
 	7z := "C:\Program Files\7-Zip\7z.exe"
 	
 }
+
+if !FileExist("C:\Program Files (x86)\7-Zip\7z.exe") {
+    msgbox, It looks like you might not have 7zip installed...`nLet me check another directory.	
+	
+}
+
+if !FileExist("C:\Program Files\7-Zip\7z.exe") {
+    msgbox, It looks like you still dont have 7zip installed...`nGo grab a copy and install it on your c drive pls!
+    Return
+	
+}
+
+
+IfNotExist, ffmpeg.exe
+{
+	gosub, unzipFF
+     return
+}
+Return
+
+unzipME:
 
 IfExist, new-mplayer.exe
 return
@@ -52,17 +68,6 @@ Return
 
 
 unzipFF:
-if FileExist("C:\Program Files (x86)\7-Zip\7z.exe") {
-	
-	7z := "C:\Program Files (x86)\7-Zip\7z.exe"
-	
-}
-
-if FileExist("C:\Program Files\7-Zip\7z.exe") {
-	
-	7z := "C:\Program Files\7-Zip\7z.exe"
-	
-}
 
 IfExist, ffmpeg.exe
 return
@@ -78,12 +83,15 @@ SplitPath, File, OutFileName, OutDir, OutExtension, OutNameNoExt, OutDrive
 ExtractedPath=%Folder%\%OutNameNoExt%
 
 ;extracts to folder named after original zip file in download folder
+;run7z := ComSpec . " /k " 7z . " x " . FullPath . " -o" . chr(0x22) . ExtractedPath . chr(0x22)
 RunWait, %7z% x `"%FullPath%`" -o`"%ExtractedPath%`"
 
 FileMove, %ExtractedPath%\%OutNameNoExt%\bin\ffmpeg.exe, ffmpeg.exe
 sleep, 500
 FileMove, %ExtractedPath%\%OutNameNoExt%\bin\ffplay.exe, ffplay.exe
-sleep, 200
+sleep, 500
+FileMove, %ExtractedPath%\%OutNameNoExt%\bin\ffprobe.exe, ffprobe.exe
+sleep, 500
 FileRemoveDir,%OutNameNoExt%, 1
 sleep, 100
 FileDelete, %OutFileName%
