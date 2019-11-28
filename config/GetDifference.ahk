@@ -6,6 +6,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 RemovedAudio := InputFolder . "\ExtractedAudio.avi"
 FileDelete, %RemovedAudio%
 sleep, 10
+Return
 
 EnableGetDifference:
 if (DisableGetDifferencePls = 1) {
@@ -27,18 +28,14 @@ SeekVar := ""
 EndVar := ""
 sourceFile1 := DefaultSourceFile
 sourceFile2 := InputFolder . "\Moshed\" . BakedFilename
+CompressedAVI := InputFolder . "\output.avi"
 
-
-Test1 := !RegExMatch(MEncoderOptions,"( -ss )") ;Temp Fix
-Test2 := !RegExMatch(FFmpegOptions,"( -ss )") ;Temp Fix
-
-if (Test1 = 1) && (Test2 = 1) {
+if !RegExMatch(MEncoderOptions,"( -ss )") && !RegExMatch(FFmpegOptions,"( -ss )") {
 
      OriginalVideo := ComSpec . " /c ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . chr(0x22) . sourceFile1 . chr(0x22)
 	GetDuration1 := ComObjCreate("WScript.Shell").Exec(OriginalVideo).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
 	OriginalDuration := GetDuration1
 	StringTrimRight, OriginalDuration, OriginalDuration, 5 ;Remove extra unneeded numbers
-	
 	;msgbox, %OriginalDuration%
 	
 	
@@ -46,7 +43,6 @@ if (Test1 = 1) && (Test2 = 1) {
 	GetDuration2 := ComObjCreate("WScript.Shell").Exec(GlitchedVideo).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
 	GlitchedDuration := GetDuration2
 	StringTrimRight, GlitchedDuration, GlitchedDuration, 5 ;Remove extra unneeded numbers
-	
 	;msgbox, %GlitchedDuration%
 	
 	
@@ -126,6 +122,7 @@ if RegExMatch(MEncoderOptions,"( -endpos )") else if RegExMatch(FFmpegOptions,"(
 			Difference := Calculate
 			Difference := StrReplace(Difference, "`r`n", "") ;Removes linebreak and shit.
 			
+			;Dont think I need this anymore, will probably remove soon.
 			;if (RecompressVar = "MEncoder") && RegExMatch(MEncoderOptions,"( -ss )") {
 				
 			;Extract Audio via MEncoder, since the seeking seems to snap to keyframes in contrast to FFmpegs frame accurate seeking.
@@ -192,7 +189,7 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 			
 			if (RecompressVar = "FFmpeg") {
 				;OptionArray := StrSplit(FFmpegOptions, "-")
-								
+				
 				
 			;Get Original Video Duration
 				OriginalVideo := ComSpec . " /c ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . chr(0x22) . sourceFile1 . chr(0x22)
@@ -258,29 +255,40 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 			
 			;If you're using MEncoder for this we have to use a different approach.
 			if (RecompressVar = "MEncoder") {
+								
+								
+				;Get Duration of original encoded avi before datamosh, via MPlayer since FFmpeg doesn't support some of these codecs.
+				MECommand := ComSpec . " /c " . " mplayer -vo null -ao null -frames 0 -identify " . chr(0x22) . CompressedAVI . chr(0x22)
+				MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdOut.ReadAll()
 				
-			;Extract Audio via MEncoder, since the seeking seems to snap to keyframes in contrast to FFmpegs frame accurate seeking.
-				ExtractAudio := ComSpec . " /k mencoder -ss " . SeekVar . " " . chr(0x22) . sourceFile1 . chr(0x22) . " -oac mp3lame -ovc frameno -o " . InputFolder . "\ExtractedAudio.avi "
-				runwait, %ExtractAudio%
-				sleep, 10
-				NewAudioFile :=  InputFolder . "\ExtractedAudio.avi "
-				;msgbox, %NewAudioFile%
+				StartingPos := InStr(MEoutput, "ID_LENGTH=")
+				Duration := SubStr(MEoutput, StartingPos, 20)
+				
+				vText := JEE_StrReplaceChars(Duration, "ABCDEFGHIJKLMNOPQRSTUVWXYZ=_", "", vCount)
+				NewOriginalDuration := vText
+				NewOriginalDuration := StrReplace(NewOriginalDuration, "`r`n", "") ;Removes linebreak and shit.
+				
+                    ;Remove alphabetical characters and some special characters from string; borrowed from: https://www.autohotkey.com/boards/viewtopic.php?t=32526#p151493
+				JEE_StrReplaceChars(vText, vNeedles, vReplaceText:="", ByRef vCount:="")
+				{
+					vCount := StrLen(vText)
+	                    ;Loop, Parse, vNeedles ;change it to this for older versions of AHK v1
+					Loop, Parse, % vNeedles
+						vText := StrReplace(vText, A_LoopField, vReplaceText)
+					vCount := vCount-StrLen(vText)
+					return vText
+				}
 				
 				
-			;Get Original Video Duration
-				OriginalVideo := ComSpec . " /c ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . chr(0x22) . NewAudioFile . chr(0x22)
-				GetDuration1 := ComObjCreate("WScript.Shell").Exec(OriginalVideo).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
-				OriginalDuration := GetDuration1
-				StringTrimRight, OriginalDuration, OriginalDuration, 5 ;Remove extra unneeded numbers
-				;msgbox, %OriginalDuration%
 				
-				
-			;Get Glitched video duration
+			     ;Get Glitched video duration via FFmpeg.
 				GlitchedVideo := ComSpec . " /c ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . chr(0x22) . sourceFile2 . chr(0x22)
 				GetDuration2 := ComObjCreate("WScript.Shell").Exec(GlitchedVideo).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
 				GlitchedDuration := GetDuration2
-				StringTrimRight, GlitchedDuration, GlitchedDuration, 5 ;Remove extra unneeded numbers
+				StringTrimRight, GlitchedDuration, GlitchedDuration, 6 ;Remove extra unneeded numbers, yep its legacy i know lol
 				;msgbox, %GlitchedDuration%
+				
+				
 				
 			;I Dont think this is needed for the MEncoder syncing method.	
 			;Subtract how far you seeked into the video. from the original duration.
@@ -292,8 +300,8 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 				
 				
 				
-			;Perform difference calculations
-				Workaround2 := ComSpec . " /c echo (" . OriginalDuration . "/" . GlitchedDuration . ") | bc -l "
+			     ;Perform difference calculations
+				Workaround2 := ComSpec . " /c echo (" . NewOriginalDuration . "/" . GlitchedDuration . ") | bc -l "
 				Calculate2 := ComObjCreate("WScript.Shell").Exec(Workaround2).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
 				Difference2 := Calculate2
 				Difference2 := StrReplace(Difference2, "`r`n", "") ;Removes linebreak and shit.
