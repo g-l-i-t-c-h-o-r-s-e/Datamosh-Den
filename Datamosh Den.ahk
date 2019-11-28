@@ -6,7 +6,7 @@
 SetWorkingDir %A_ScriptDir%
 SetBatchLines -1
 
-#Include config/GetCodecs.ahk ; Populate the MEncoder and FFmpeg Codec lists!!! <3
+#Include config\GetCodecs.ahk ; Populate the MEncoder and FFmpeg Codec lists!!! <3
 
 ;Custom GUI for baking yo files.
 BakeGUI() {
@@ -35,11 +35,12 @@ AMV2GUI() {
 	WinWaitClose, AMV2 Watermark Removal Hack	
 }
 
+
 ;Input, Forced Options and Extra Filter GUI Stuff
 Gui, Color, DDCEE9
 pic := A_ScriptDir . "\config\Background.png"
 Gui, Add, Pic, x0 y0 w486 h363 vBack, %pic%
-;I HAD TO PLACE THE GUI PIC BACKGROUND PLACEMENT HERE TO MAKE IT WORK!!!
+;I HAD TO MOVE THE GUI PIC BACKGROUND PLACEMENT HERE TO MAKE IT WORK!!!
 Gui Add, GroupBox, x154 y10 w314 h83 ,
 Gui Add, Button, x165 y34 w44 h43 gSelectSource, Source
 Gui Add, Edit, x285 y45 w63 h21 +Center vResolutionVar, 640x360
@@ -61,8 +62,6 @@ Gui Add, Text, x52 y120 w90 h15 +0x200 +BackgroundTrans, MEncoder Options
 Gui Add, CheckBox, x47 y159 w104 h23 vRescaleMEncoderCodec hWndRescaleMEncoderCodec, Attempt Rescale?
 Gui Add, Button, x158 y183 w22 h23 vMEncoderCompression gPreMEncoderCompression, GO
 
-GuiControl, +BackgroundBlack, % RescaleMEncoderCodec
-
 ;FFmpeg GUI Stuff
 Gui Add, GroupBox, x17 y226 w168 h125 , 
 Gui Add, ComboBox, x39 y314 w120 vFFmpegCodecs, %FFEncoderList%
@@ -75,8 +74,8 @@ Gui Add, Slider, x19 y289 w164 h18 Range0-1000 vVideoQuality gVideoQualitySlider
 ;Tomato GUI Stuff
 Gui Add, GroupBox, x198 y97 w270 h254,
 Gui Add, ComboBox, x265 y171 w120 Choose7 vTomatoMode, irep|ikill|iswap|bloom|pulse|shuffle|overlapped|jiggle|reverse|invert
-Gui Add, Edit, x303 y217 w41 h21 vTomatoFramePosition +Center, 2
-Gui Add, Edit, x303 y264 w41 h21 vTomatoFrameCount +Center, 4
+Gui Add, Edit, x303 y217 w41 h21 vTomatoFrameCount +Center, 4
+Gui Add, Edit, x303 y264 w41 h21 vTomatoFramePosition +Center, 2
 Gui Add, Text, x293 y195 w62 h23 +0x200 +BackgroundTrans, Frame Count
 Gui Add, Text, x288 y242 w71 h23 +0x200 +BackgroundTrans, Frame Position
 Gui Add, Text, x282 y148 w81 h23 +0x200 +BackgroundTrans, Datamosh Mode
@@ -93,7 +92,6 @@ Gui Add, Button, x214 y289 w48 h46 vTomatoRecycle gRecycleTomatoOutput, Remosh
 Gui Add, Button, x438 y111 w23 h23 vTomatoHalpButton gTomatoHalp, ?
 Gui Add, CheckBox, x227 y123 w13 h22 vPythonLocationIsOn gEnableForcePythonLocation, CheckBox
 Gui Add, Text, x205 y110 w65 h13, Force Python
-;Gui Add, Button, x410 y62 w90 h30 vpythonButton gForcePythonLocation, Force Python Path
 
 ;Compress with FFmpeg or MEncoder GUI Radio elements
 Gui Add, Radio, x168 y106 w15 h16 gEnableME vEnableMEncoderCodec Checked
@@ -134,7 +132,6 @@ Gui Show, w485 h363, Datamosh Den - Ver 1.8.3 (Beta)
 
 ;Check if newer MEncoder package is in folder, if so extract it.
 #Include config\GetFFmpeg.ahk
-#Include config\unzip.ahk
 #Include config\GetDifference.ahk
 Return
 
@@ -265,6 +262,8 @@ msgbox, Using the selected %RecompressVar% Filters!
 Gui, Destroy
 Return
 
+
+
 EnableCustomEncodeWindow:
 GuiControlGet, EnableCustomEncodeWindowVar
 if (EnableCustomEncodeWindowVar = 0) {
@@ -302,10 +301,12 @@ if (EnableCustomDecodeWindowVar = 1) {
 }
 Return
 
+
+
 GetFilters:
 		;Horizontal Filters
 if (EncHori = 0) {
-				;EncodeReversibleFilterVal := ""
+;EncodeReversibleFilterVal := ""
 }
 if (EncHori = 1) && (RecompressVar = "MEncoder") {
 	EncodeReversibleFilterVal .= "," . "mirror"
@@ -315,7 +316,7 @@ if (EncHori = 1) && (RecompressVar = "FFmpeg") {
 }
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 if (DecHori = 0) {
-				;DecodeReversibleFilterVal := ""
+;DecodeReversibleFilterVal := ""
 }
 if (DecHori = 1) && (RecompressVar = "MEncoder") {
 	DecodeReversibleFilterVal .= "," . "mirror"
@@ -327,7 +328,7 @@ if (DecHori = 1) && (RecompressVar = "FFmpeg") {
 
 		;Vertical Filters
 if (EncVert = 0) {
-				;EncodeReversibleFilterVal := ""
+;EncodeReversibleFilterVal := ""
 }
 if (EncVert = 1) && (RecompressVar = "MEncoder") {
 	EncodeReversibleFilterVal .= "," . "flip"
@@ -337,7 +338,7 @@ if (EncVert = 1) && (RecompressVar = "FFmpeg") {
 }
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 if (DecVert = 0) {
-				;DecodeReversibleFilterVal := ""
+;DecodeReversibleFilterVal := ""
 }
 if (DecVert = 1) && (RecompressVar = "MEncoder") {
 	DecodeReversibleFilterVal .= "," . "flip"
@@ -349,7 +350,7 @@ if (DecVert = 1) && (RecompressVar = "FFmpeg") {
 
 		;Transpose Filters
 if (EncTrans = 0) {
-				;EncodeReversibleFilterVal := ""
+;EncodeReversibleFilterVal := ""
 }
 if (EncTrans = 1) && (RecompressVar = "MEncoder") {
 	EncodeReversibleFilterVal .= "," . "rotate=0"
@@ -359,7 +360,7 @@ if (EncTrans = 1) && (RecompressVar = "FFmpeg") {
 }
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 if (DecTrans = 0) {
-				;DecodeReversibleFilterVal := ""
+;DecodeReversibleFilterVal := ""
 }
 if (DecTrans = 1) && (EncVert = 0) && (EncHori = 0) && (RecompressVar = "MEncoder") else if (RecompressVar = "FFmpeg") {
 	DecodeReversibleFilterVal .= "," . "rotate=0"
@@ -375,9 +376,9 @@ if (DecTrans = 1) && (EncVert = 1) && (EncHori = 0) && (RecompressVar = "MEncode
 }
 
 
-		;Reverse Filters, coming soon.
+		;Reverse Filters.
 if (EncRev = 0) {
-	;EncodeReversibleFilterVal := ""
+;EncodeReversibleFilterVal := ""
 }
 if (EncRev = 1) && (RecompressVar = "MEncoder") {
 	EncodeReversibleFilterVal .= "," . "scale"
@@ -387,7 +388,7 @@ if (EncRev = 1) && (RecompressVar = "FFmpeg") {
 }
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 if (DecRev = 0) {
-	;DecodeReversibleFilterVal := ""
+;DecodeReversibleFilterVal := ""
 }
 if (DecRev = 1) && (RecompressVar = "MEncoder") {
 	DecodeReversibleFilterVal .= "," . "scale"
@@ -399,7 +400,7 @@ if (DecRev = 1) && (RecompressVar = "FFmpeg") {
 
 		;Invert Filters
 if (EncInv = 0) {
-				;EncodeReversibleFilterVal := ""
+;EncodeReversibleFilterVal := ""
 }
 if (EncInv = 1) && (RecompressVar = "MEncoder") {
 	EncodeReversibleFilterVal .= "," . "eq2=0:-1:0,scale"
@@ -409,7 +410,7 @@ if (EncInv = 1) && (RecompressVar = "FFmpeg") {
 }
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 if (DecInv = 0) {
-				;DecodeReversibleFilterVal := ""
+;DecodeReversibleFilterVal := ""
 }
 if (DecInv = 1) && (RecompressVar = "MEncoder") {
 	DecodeReversibleFilterVal .= "," . "eq2=0:-1:0,scale"
@@ -421,7 +422,7 @@ if (DecInv = 1) && (RecompressVar = "FFmpeg") {
 
 		;Hue Filters
 if (EncHue = 0) {
-				;EncodeReversibleFilterVal := ""
+;EncodeReversibleFilterVal := ""
 }
 if (EncHue = 1) && (RecompressVar = "MEncoder") {
 	EncodeReversibleFilterVal .= "," . "hue=" . HueValue . ",scale" ;Scale is needed to correct the colorspace I guess?
@@ -431,7 +432,7 @@ if (EncHue = 1) && (RecompressVar = "FFmpeg") {
 }
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 if (DecHue = 0) {
-				;DecodeReversibleFilterVal := ""
+;DecodeReversibleFilterVal := ""
 }
 if (DecHue = 1) && !RegExMatch(HueValue,"(-)") && (RecompressVar = "MEncoder") {
 	DecodeReversibleFilterVal .= "," . "hue=-" . HueValue . ",scale"
@@ -494,6 +495,8 @@ Gui, hue:Submit, NoHide
 gosub, GetFilters
 Gui, hue:Destroy
 Return
+
+
 
 EnableReverseVideo:
 gosub, EnableForceRate
@@ -597,6 +600,7 @@ else
 Return
 
 
+
 BatchInputMessage:
 Gui, Submit, NoHide
 if (IsBatchInput = 1) && if (BatchInputHelpMsg = 1){
@@ -656,7 +660,6 @@ GuiControl,, WebCamName, |%DeviceList%
 GuiControl, Choose, WebCamName, 2
  ;Control, ShowDropDown,, ComboBox2
 Return
-
 
 SelectWebcam:
 Gui, Submit, NoHide
