@@ -58,7 +58,7 @@ You can grab a copy of it from [here.]( https://github.com/itsKaspar/tomato) Tha
 
 • Segment video into multiple files and apply random Tomato settings to each one [✖]
 
-• Option to hex edit the avi to force glitches and compression artifacts [✖]
+• Option to hex edit the avi to force glitches and compression artifacts [✔]
 
 • Add Force Frame Rate(FPS) to RetryScale function [✔]
 
