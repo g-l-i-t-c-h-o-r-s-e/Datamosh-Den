@@ -133,7 +133,7 @@ isRecompressed := 0
 WebcamCompression := "0"
 AllowChexr := 0
 
-Gui Show, w485 h363, Datamosh Den - Ver 1.8.3 (Beta)
+Gui Show, w485 h363, Datamosh Den - Ver 1.8.6 (Beta)
 
 ;Check if newer MEncoder package is in folder, if so extract it.
 #Include config\GetFFmpeg.ahk
@@ -2042,3 +2042,4 @@ Return
 GuiEscape:
 GuiClose:
 ExitApp
+
