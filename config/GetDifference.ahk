@@ -255,20 +255,22 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 			
 			;If you're using MEncoder for this we have to use a different approach.
 			if (RecompressVar = "MEncoder") {
-								
-								
+				
+				
 				;Get Duration of original encoded avi before datamosh, via MPlayer since FFmpeg doesn't support some of these codecs.
 				MECommand := ComSpec . " /c " . " mplayer -vo null -ao null -frames 0 -identify " . chr(0x22) . CompressedAVI . chr(0x22)
 				MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdOut.ReadAll()
 				
+				;Trim MPlayer output down to the audio duration string.
 				StartingPos := InStr(MEoutput, "ID_LENGTH=")
 				Duration := SubStr(MEoutput, StartingPos, 20)
 				
+				
+				;Remove alphabetical characters and some special characters from string; borrowed from: https://www.autohotkey.com/boards/viewtopic.php?t=32526#p151493
 				vText := JEE_StrReplaceChars(Duration, "ABCDEFGHIJKLMNOPQRSTUVWXYZ=_", "", vCount)
 				NewOriginalDuration := vText
 				NewOriginalDuration := StrReplace(NewOriginalDuration, "`r`n", "") ;Removes linebreak and shit.
 				
-                    ;Remove alphabetical characters and some special characters from string; borrowed from: https://www.autohotkey.com/boards/viewtopic.php?t=32526#p151493
 				JEE_StrReplaceChars(vText, vNeedles, vReplaceText:="", ByRef vCount:="")
 				{
 					vCount := StrLen(vText)
@@ -278,7 +280,6 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 					vCount := vCount-StrLen(vText)
 					return vText
 				}
-				
 				
 				
 			     ;Get Glitched video duration via FFmpeg.
