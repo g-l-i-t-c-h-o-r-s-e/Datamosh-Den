@@ -53,6 +53,10 @@ Gui Add, CheckBox, x237 y43 w10 h12 gBatchInputMessage vIsBatchInput, CheckBox
 Gui Add, Text, x216 y28 w55 h14 +BackgroundTrans, Batch Input
 Gui Add, CheckBox, x237 y70 w10 h12 gEnableOtherOptions vIsOtherOptionsOn, CheckBox
 Gui Add, Text, x219 y56 w65 h14 +BackgroundTrans, Extra Stuff
+Gui Add, Button, x406 y31 w47 h21 gMakeChexrGui, Hex Edit
+Gui Add, Button, x406 y52 w47 h28 gForceBake, Force Bake
+
+
 
 ;MEncoder GUI Stuff
 Gui Add, GroupBox, x17 y97 w168 h125 ,
@@ -73,7 +77,7 @@ Gui Add, Slider, x19 y289 w164 h18 Range0-1000 vVideoQuality gVideoQualitySlider
 
 ;Tomato GUI Stuff
 Gui Add, GroupBox, x198 y97 w270 h254,
-Gui Add, ComboBox, x265 y171 w120 Choose7 vTomatoMode, irep|ikill|iswap|bloom|pulse|shuffle|overlapped|jiggle|reverse|invert
+Gui Add, ComboBox, x265 y171 w120 Choose7 vTomatoMode, irep|ikill|iswap|bloom|pulse|shuffle|overlapped|jiggle|reverse|invert|void
 Gui Add, Edit, x303 y217 w41 h21 vTomatoFrameCount +Center, 4
 Gui Add, Edit, x303 y264 w41 h21 vTomatoFramePosition +Center, 2
 Gui Add, Text, x293 y195 w62 h23 +0x200 +BackgroundTrans, Frame Count
@@ -127,12 +131,14 @@ ReverseDecompression := 0
 ReverseOnce := 1
 isRecompressed := 0
 WebcamCompression := "0"
+AllowChexr := 0
 
 Gui Show, w485 h363, Datamosh Den - Ver 1.8.3 (Beta)
 
 ;Check if newer MEncoder package is in folder, if so extract it.
 #Include config\GetFFmpeg.ahk
 #Include config\GetDifference.ahk
+#Include config\UseChexr.ahk
 Return
 
 
@@ -993,6 +999,8 @@ Return
 
 
 PreMEncoderCompression:
+AllowChexr := 1
+
 if (SourceFile = "") && (WebcamCompression = 0) {
 	msgbox, uhhh you didn't select a video source???
 }
@@ -1040,6 +1048,7 @@ gosub, EnableForceRes
 gosub, GetFilters
 gosub, GetFilterOptionsAndFixStrings
 
+
 if (UseOtherOptions = 0) { ;Remove the extra options/Reversible filters, if disabled.
 	EncodeReversibleFilterVal := ""
 	DecodeReversibleFilterVal := ""
@@ -1048,11 +1057,6 @@ if (UseOtherOptions = 0) { ;Remove the extra options/Reversible filters, if disa
 
 if (ForceRes = 1) && if (UseOtherOptions = 1) {
 	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
-}
-
-if (SourceFile = "") {
-	msgbox, Select Something Yo.
-	return
 }
 
 if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll") else if (MencoderCodecs = "Amv3Codec.dll") {
@@ -1088,6 +1092,14 @@ CheckFile := OutputFolder . "\ImBaked.yuv"
 if FileExist(CheckFile) {
 	FileDelete, %OutputFolder%/ImBaked.yuv
 }
+
+;Remove any extra datamoshed output files after compression, to avoid chexr file confliction with previous input file.
+CheckFile := OutputFolder . "\output-moshed.avi"
+if FileExist(CheckFile) {
+	FileDelete, %CheckFile%
+}
+
+
 
 If RegExMatch(MEoutput,"(Compressor doesn't have a configure dialog)") else IF RegExMatch(MEoutput,"(Compressor configure dialog failed!)")  {
 	msgbox, Looks like the compressor lacks a configuration dialog or it failed, disabling.
@@ -1193,8 +1205,14 @@ AMV2BufferWatermark3 := " -sws 4 -vf scale=3840:2160,expand=0:-330:0:0,scale=384
 ;AMV2RemoveWatermark3 := " -vf crop=3840:1860:0:290"
 
 
+gosub, WebCamCompression
+gosub, EnableReverseVideo
 gosub, EnableForceRate
 gosub, EnableForceRes
+;gosub, GetFilters
+;gosub, GetFilterOptionsAndFixStrings
+
+
 
 if (UseOtherOptions = 0) { ;Remove the extra options/Reversible filters, if disabled.
 	EncodeReversibleFilterVal := ""
@@ -1208,8 +1226,15 @@ if (ForceRes = 1) && if (UseOtherOptions = 1) {
 msgbox, Testing Custom AMV compression, removing watermark, etc.
 ;Select Preset for now.
 AMV2GUI()
+if (UseOtherOptions = 1) {
+	EncodeReversibleFilterVal := StrReplace(EncodeReversibleFilterVal, "-vf ", "") ;Remove -vf
+	EncodeReversibleFilterVal := Trim(EncodeReversibleFilterVal) ;Remove spaces.
+	
+	whichPreset := whichPreset . "," . EncodeReversibleFilterVal
+}
 
-MECommand := cmd.exe /k "mencoder " . chr(0x22) . SourceFile . chr(0x22) . whichPreset . FrameRate . " -of avi -o output.avi -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
+
+MECommand := ComSpec . " /c " . " mencoder " . chr(0x22) . SourceFile . chr(0x22) . whichPreset . FrameRate . " -of avi -o " . InputFolder . "\output.avi -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
 
 MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
 
@@ -1256,6 +1281,8 @@ runwait, cmd.exe /k %GetOptions%
 Return
 
 PreFFmpegCompression:
+AllowChexr := 1
+
 if (SourceFile = "") && (WebcamCompression = 0) {
 	msgbox, uhhh you didn't select a video source???
 }
@@ -1301,10 +1328,6 @@ gosub, GetFilters
 gosub, EnableForceRate
 gosub, GetFilterOptionsAndFixStrings
 
-if (SourceFile = "") {
-	msgbox, Select Something Yo.
-	return
-}
 
 if (isBatchFilename = 1) {
 	fileVal +=1
@@ -1338,6 +1361,14 @@ CheckFile := OutputFolder . "\ImBaked.yuv"
 if FileExist(CheckFile) {
 	FileDelete, %OutputFolder%/ImBaked.yuv
 }
+
+;Remove any extra datamoshed output files after compression, to avoid chexr file confliction with previous input file.
+CheckFile := OutputFolder . "\output-moshed.avi"
+if FileExist(CheckFile) {
+	FileDelete, %CheckFile%
+}
+
+
 
 IF RegExMatch(FFoutput,"(The specified picture size)") else IF RegExMatch(FFoutput,"(maybe incorrect parameters)") {
 	msgbox, oshit an error, my first guess is video resolution is probably wrong.`n%FFoutput%
@@ -1382,8 +1413,9 @@ if (ResolutionVar = " -vf scale=") {
 	return
 }
 
+gosub, OutputLocation
 
-FFCommand := cmd.exe /k "ffmpeg -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " output.avi -y"
+FFCommand := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " " . InputFolder . "\output.avi -y"
    ;MsgBox, %FFCommand%
 
   ;Execute FFmpeg Here, also reads Standard Error Output.
@@ -1434,10 +1466,10 @@ if (ResolutionVar = " -vf scale=") {
 	return
 }
 
+gosub, OutputLocation
 
-
-MECommand := cmd.exe /c "mencoder " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -of avi -o output.avi -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
-   ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
+MECommand := ComSpec . " /c " . " mencoder " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . FrameRate . " -of avi -o " . InputFolder . "\output.avi -ovc vfw -xvfwopts codec=" . MencoderCodecs . config . " -nosub -nosound"
+  ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
 MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
@@ -1997,6 +2029,10 @@ gosub, UnReverseVideo
 gosub, EnableGetDifference
 Return
 
+ForceBake:
+BakeGUI()
+WinWaitClose, Shall We Bake Some More???
+Return
 
 NoReBake:
 Gui, 3:Destroy
@@ -2006,4 +2042,3 @@ Return
 GuiEscape:
 GuiClose:
 ExitApp
-
