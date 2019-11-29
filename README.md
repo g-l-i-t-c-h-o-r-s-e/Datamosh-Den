@@ -1,5 +1,10 @@
 
 # HOPEFULLY THIS WORKS FOR EVERYONE, IF SO BEHOLD THE ALMOST OFFICIAL BUILD
+
+
+
+# Please Read All Of This In Detail.
+YOU NEED AUTOHOTKEY INSTALLED: [grab a copy here](https://www.autohotkey.com/download/ahk-install.exe)                          
 You will still need to grab 7zip from https://www.7-zip.org/ i. e [here](https://www.7-zip.org/a/7z1900.exe)                            
 as well as Python 2.7.16   [found here](https://www.python.org/downloads/release/python-2716/)                                                   
 Read [the wiki](https://github.com/g-l-i-t-c-h-o-r-s-e/Datamosh-Den/wiki/Halp) if you need help, or PM me :>                       
