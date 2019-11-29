@@ -33,6 +33,8 @@ Hopefully this will make Datamoshing more accesible to people on Windows who are
 
 • Sync Datamoshed Video back to the original duration and optionally mix the original audio back in!
 
+• Apply numerous Hex Edits to the Compressed or Datamoshed AVI! (i.e Before Datamosh or After Datamosh)
+
 • Probably more I haven't mentioned idk
 
 
