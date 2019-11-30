@@ -1,5 +1,5 @@
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
-;This Script takes the baked video and then calls ffprobe to get the duration
+;This Script takes the baked video and then calls ffprobe or mplayer to get the duration,
 ;So that we can then divide the glitched videos duration with the original duration to get the difference between the two
 ;That way we can sync the glitched video back to the original videos duration, and optionally add the audio back.
 
@@ -29,6 +29,7 @@ EndVar := ""
 sourceFile1 := DefaultSourceFile
 sourceFile2 := InputFolder . "\Moshed\" . BakedFilename
 CompressedAVI := InputFolder . "\output.avi"
+BCPath := A_ScriptDir . "\config\bc.exe" ;Needed to perform floating point calculations.
 
 if !RegExMatch(MEncoderOptions,"( -ss )") && !RegExMatch(FFmpegOptions,"( -ss )") {
 
@@ -46,7 +47,7 @@ if !RegExMatch(MEncoderOptions,"( -ss )") && !RegExMatch(FFmpegOptions,"( -ss )"
 	;msgbox, %GlitchedDuration%
 	
 	
-	Workaround := ComSpec . " /c echo (" . OriginalDuration . "/" . GlitchedDuration . ") | bc -l "
+	Workaround := ComSpec . " /c echo (" . OriginalDuration . "/" . GlitchedDuration . ") | " . BCPath . " -l "
 	Calculate := ComObjCreate("WScript.Shell").Exec(Workaround).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
 	Difference := Calculate
 	Difference := StrReplace(Difference, "`r`n", "") ;Removes linebreak and shit.
@@ -117,7 +118,7 @@ if RegExMatch(MEncoderOptions,"( -endpos )") else if RegExMatch(FFmpegOptions,"(
 			
 			
 		     ;Get Difference, using the trimmed amount as the duration
-			Workaround := ComSpec . " /c echo (" . EndVar . "/" . GlitchedDuration . ") | bc -l "
+			Workaround := ComSpec . " /c echo (" . EndVar . "/" . GlitchedDuration . ") | " . BCPath . " -l "
 			Calculate := ComObjCreate("WScript.Shell").Exec(Workaround).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
 			Difference := Calculate
 			Difference := StrReplace(Difference, "`r`n", "") ;Removes linebreak and shit.
@@ -208,7 +209,7 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 				
 				
 			;Subtract how far you seeked into the video. from the original duration.
-				Workaround1 := ComSpec . " /c echo (" . OriginalDuration . "-" . SeekVar . ") | bc -l "
+				Workaround1 := ComSpec . " /c echo (" . OriginalDuration . "-" . SeekVar . ") | " . BCPath . " -l "
 				Calculate1 := ComObjCreate("WScript.Shell").Exec(Workaround1).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
 				Difference1 := Calculate1
 				NewDuration := StrReplace(Difference1, "`r`n", "") ;Removes linebreak and shit.
@@ -217,7 +218,7 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 				
 				
 			;Perform difference calculations
-				Workaround2 := ComSpec . " /c echo (" . NewDuration . "/" . GlitchedDuration . ") | bc -l "
+				Workaround2 := ComSpec . " /c echo (" . NewDuration . "/" . GlitchedDuration . ") | " . BCPath . " -l "
 				Calculate2 := ComObjCreate("WScript.Shell").Exec(Workaround2).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
 				Difference2 := Calculate2
 				Difference2 := StrReplace(Difference2, "`r`n", "") ;Removes linebreak and shit.
@@ -293,7 +294,7 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 				
 			;I Dont think this is needed for the MEncoder syncing method.	
 			;Subtract how far you seeked into the video. from the original duration.
-			;	Workaround1 := ComSpec . " /c echo (" . OriginalDuration . "-" . SeekVar . ") | bc -l "
+			;	Workaround1 := ComSpec . " /c echo (" . OriginalDuration . "-" . SeekVar . ") | " . BCPath . " -l "
 			;	Calculate1 := ComObjCreate("WScript.Shell").Exec(Workaround1).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
 			;	Difference1 := Calculate1
 			;	NewDuration := StrReplace(Difference1, "`r`n", "") ;Removes linebreak and shit.
@@ -302,7 +303,7 @@ if RegExMatch(MEncoderOptions,"( -ss )") or RegExMatch(FFmpegOptions,"( -ss )") 
 				
 				
 			     ;Perform difference calculations
-				Workaround2 := ComSpec . " /c echo (" . NewOriginalDuration . "/" . GlitchedDuration . ") | bc -l "
+				Workaround2 := ComSpec . " /c echo (" . NewOriginalDuration . "/" . GlitchedDuration . ") | " . BCPath . " -l "
 				Calculate2 := ComObjCreate("WScript.Shell").Exec(Workaround2).StdOut.ReadAll() ;Calculate output from FFprobe and save stdout to variable!
 				Difference2 := Calculate2
 				Difference2 := StrReplace(Difference2, "`r`n", "") ;Removes linebreak and shit.
