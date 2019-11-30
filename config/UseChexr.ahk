@@ -133,7 +133,6 @@ InputAVI := InputFolder . "\output.avi"
 OutputAVI := InputFolder . "\output-hexed-temp.avi"
 
 HexEditMe := ComSpec . " /c " . chexrpath . InputAVI . " " . CompressedTargetValue . " " . CompressedReplaceValue . " " . OutputAVI . " " . SkipVar . " " . MaxTimesVar
-msgbox, %HexEditMe%
 chexr := ComObjCreate("WScript.Shell").Exec(HexEditMe).StdOut.ReadAll()
 msgbox, %chexr%
 
@@ -151,12 +150,6 @@ Gui, Submit, NoHide
 gosub, OutputLocation
 gosub, EnableCompressedSkipAmount
 gosub, EnableCompressedMaxAmount
-
-CheckFile := OutputFolder . "\output-moshed.avi"
-if !FileExist(CheckFile) {
-	msgbox, pls datamosh the video first.
-	Return
-}
 
 InputAVI := InputFolder . "\output.avi"
 OutputAVI := InputFolder . "\output-hexed-temp.avi"
