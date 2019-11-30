@@ -999,8 +999,6 @@ Return
 
 
 PreMEncoderCompression:
-AllowChexr := 1
-
 if (SourceFile = "") && (WebcamCompression = 0) {
 	msgbox, uhhh you didn't select a video source???
 }
@@ -1172,12 +1170,13 @@ if (NoTomato4U = 1) {
 
 ;If Compression didn't fail, enable the Tomato window.
 if (isBatchFilename = 0) {
-	msgbox, You may now use the Tomato window to Datamosh!	
+	msgbox, You may now use the Tomato window to Datamosh!
 }
 GuiControl, 1:Enable, TomatoMode
 GuiControl, 1:Enable, TomatoFrameCount
 GuiControl, 1:Enable, TomatoFramePosition
 GuiControl, 1:Enable, TomatoMOSHIT
+AllowChexr := 1
 Return
 
 CustomAMVCompression:
@@ -1281,8 +1280,6 @@ runwait, cmd.exe /k %GetOptions%
 Return
 
 PreFFmpegCompression:
-AllowChexr := 1
-
 if (SourceFile = "") && (WebcamCompression = 0) {
 	msgbox, uhhh you didn't select a video source???
 }
@@ -1394,6 +1391,7 @@ GuiControl, 1:Enable, TomatoMode
 GuiControl, 1:Enable, TomatoFrameCount
 GuiControl, 1:Enable, TomatoFramePosition
 GuiControl, 1:Enable, TomatoMOSHIT
+AllowChexr := 1
 Return
 
 
