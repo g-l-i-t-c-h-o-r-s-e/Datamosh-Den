@@ -4,7 +4,6 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 SetBatchLines -1
 
-
 MakeChexrGui:
 if (AllowChexr = 0) {
 	msgbox, pls compress a video first.
@@ -52,9 +51,10 @@ GuiControl, chexr:Disable, MaxReplaceTimesDatamoshedVar
 
 Gui chexr:-sysmenu
 Gui chexr:Show, w387 h272, Chexr Hex Edit Interface
+
+chexrpath := A_ScriptDir . "\config\chexr.exe " ;chexr.exe location.
+
 Return
-
-
 
 
 
@@ -132,7 +132,8 @@ gosub, EnableCompressedMaxAmount
 InputAVI := InputFolder . "\output.avi"
 OutputAVI := InputFolder . "\output-hexed-temp.avi"
 
-HexEditMe := ComSpec . " /c " . " chexr " . InputAVI . " " . CompressedTargetValue . " " . CompressedReplaceValue . " " . OutputAVI . " " . SkipVar . " " . MaxTimesVar
+HexEditMe := ComSpec . " /c " . chexrpath . InputAVI . " " . CompressedTargetValue . " " . CompressedReplaceValue . " " . OutputAVI . " " . SkipVar . " " . MaxTimesVar
+msgbox, %HexEditMe%
 chexr := ComObjCreate("WScript.Shell").Exec(HexEditMe).StdOut.ReadAll()
 msgbox, %chexr%
 
@@ -160,7 +161,7 @@ if !FileExist(CheckFile) {
 InputAVI := InputFolder . "\output.avi"
 OutputAVI := InputFolder . "\output-hexed-temp.avi"
 
-HexEditMe := ComSpec . " /c " . " chexr " . InputAVI . " " . CompressedTargetValue . " " . CompressedReplaceValue . " " . OutputAVI . " " . SkipVar . " " . MaxTimesVar
+HexEditMe := ComSpec . " /c " . chexrpath . InputAVI . " " . CompressedTargetValue . " " . CompressedReplaceValue . " " . OutputAVI . " " . SkipVar . " " . MaxTimesVar
 chexr := ComObjCreate("WScript.Shell").Exec(HexEditMe).StdOut.ReadAll()
 msgbox, %chexr%
 
@@ -187,7 +188,7 @@ if !FileExist(CheckFile) {
 InputAVI := OutputFolder . "\output-moshed.avi"
 OutputAVI := OutputFolder . "\output-hexed-temp.avi"
 
-HexEditMe := ComSpec . " /c " . " chexr " . InputAVI . " " . DatamoshedTargetValue . " " . DatamoshedReplaceValue . " " . OutputAVI . " " . SkipVar . " " . MaxTimesVar
+HexEditMe := ComSpec . " /c " . chexrpath . InputAVI . " " . DatamoshedTargetValue . " " . DatamoshedReplaceValue . " " . OutputAVI . " " . SkipVar . " " . MaxTimesVar
 chexr := ComObjCreate("WScript.Shell").Exec(HexEditMe).StdOut.ReadAll()
 msgbox, %chexr%
 
@@ -217,7 +218,7 @@ OutputAVI := OutputFolder . "\output-hexed-temp.avi"
 NewAVI := InputFolder . "\output.avi"
 
 
-HexEditMe := ComSpec . " /c " . " chexr " . InputAVI . " " . DatamoshedTargetValue . " " . DatamoshedReplaceValue . " " . OutputAVI . " " . SkipVar . " " . MaxTimesVar
+HexEditMe := ComSpec . " /c " . chexrpath . InputAVI . " " . DatamoshedTargetValue . " " . DatamoshedReplaceValue . " " . OutputAVI . " " . SkipVar . " " . MaxTimesVar
 chexr := ComObjCreate("WScript.Shell").Exec(HexEditMe).StdOut.ReadAll()
 msgbox, %chexr%
 
