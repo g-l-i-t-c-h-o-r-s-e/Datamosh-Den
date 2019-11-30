@@ -76,4 +76,6 @@ You can optionally grab a copy of it from [here.]( https://github.com/itsKaspar/
 
 • Batch file input [✔] (Almost done! It concats all the videos for now.)
 
+• Option to save the output files to the folder where the video source is [✖]
+
 • More codecs [✖]
