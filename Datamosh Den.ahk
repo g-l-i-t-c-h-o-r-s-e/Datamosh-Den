@@ -132,6 +132,9 @@ ReverseOnce := 1
 isRecompressed := 0
 WebcamCompression := "0"
 AllowChexr := 0
+ChexrWasUsed := 0
+ForcedBake := 0
+NoGetDiffPls := 0
 
 Gui Show, w485 h363, Datamosh Den - Ver 1.8.6 (Beta)
 
@@ -715,6 +718,7 @@ if (IsBatchInput = 1) {
 else
 	FileSelectFile, SourceFile,,,Select Source For Datamoshing......................................
      DefaultSourceFile := SourceFile
+	ItsANewSource := 1
      if errorlevel {
 	msgbox, You Didnt Select Anything lol
 	return
@@ -1045,6 +1049,7 @@ gosub, EnableForceRate
 gosub, EnableForceRes
 gosub, GetFilters
 gosub, GetFilterOptionsAndFixStrings
+;gosub, OutputLocation
 
 
 if (UseOtherOptions = 0) { ;Remove the extra options/Reversible filters, if disabled.
@@ -1072,7 +1077,7 @@ if (isBatchFilename = 1) { ; This is where the Batch output stuff happens.
 
 
 MECommand := cmd.exe /k "mencoder " . MEncoderOptions . " " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config
-  ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
+  msgbox, %MECommand% ;Used for checking of the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
 MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
@@ -1324,6 +1329,7 @@ gosub, VideoQualitySlider ; For some reason I had to place this here or else the
 gosub, GetFilters
 gosub, EnableForceRate
 gosub, GetFilterOptionsAndFixStrings
+gosub, OutputLocation
 
 
 if (isBatchFilename = 1) {
@@ -1333,10 +1339,12 @@ if (isBatchFilename = 1) {
 	OutputFilename := "./Batch-Output/output_" . zeropad . ".avi"
 }
 
-
-
-FFCommand := ComSpec . " /c " . " ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " " . OutputFilename . " -y"
-  ;MsgBox, %FFCommand%
+if (ForcedBake = 1) {
+SourceFile := InputFolder . "\Moshed\" . BakedFilename
+}
+	
+FFCommand := ComSpec . " /k " . " ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " " . OutputFilename . " -y"
+MsgBox, %FFCommand%
 
   ;Execute FFmpeg Here, also reads Standard Error Output.
 FFoutput := ComObjCreate("WScript.Shell").Exec(FFCommand).StdErr.ReadAll()
@@ -1345,7 +1353,7 @@ FFoutput := ComObjCreate("WScript.Shell").Exec(FFCommand).StdErr.ReadAll()
 StartingPos := InStr(FFoutput, "[")
 FFoutput := SubStr(FFoutput, StartingPos + 25)
 
-
+msgbox, %FFoutput%
 
 ;Remove any extra avi made by the reverse video filter.
 CheckFile := InputFolder . "\output2.avi"
@@ -1367,15 +1375,20 @@ if FileExist(CheckFile) {
 
 
 
-IF RegExMatch(FFoutput,"(The specified picture size)") else IF RegExMatch(FFoutput,"(maybe incorrect parameters)") {
+IF RegExMatch(FFoutput,"(The specified picture size)") or RegExMatch(FFoutput,"(maybe incorrect parameters)") {
 	msgbox, oshit an error, my first guess is video resolution is probably wrong.`n%FFoutput%
 	gosub, FFRetryScale
 }
 
 ;Gonna add an MPlayer workaround here soon?
+IF RegExMatch(FFoutput,"( find codec parameters for stream )") or RegExMatch(FFoutput,"(unknown codec)") {
+	msgbox, Seems FFmpeg cant decode this video codec.`nPlease try something else or try again.
+	Return
+}
+
+;Gonna add an MPlayer workaround here soon?
 IF RegExMatch(FFoutput,"(Invalid data found)") {
-	msgbox, now u done it, FFmpeg can't decode this video codec probably.
-	return
+	msgbox, There may have been an issue decoding.`nThis message is normal however, if you hex edited the avi.
 }
 
 ;Keep Tomato disabled until a compression is achieved.
@@ -1617,6 +1630,13 @@ if (MencoderCodecs = "smv2.dll") {
 	;Forces the custom decoder I added to the codecs.config
 }
 
+if (MencoderCodecs = "smv2vfw.dll") {
+
+	CustomCodecFix := "-vc smv2vfw"
+	;Forces the custom decoder I added to the codecs.config
+	;remove this whole if statement if you want to confuse mplayer and use the incorrect decoder for some spicy glitches.
+}
+
 ;Removes the watermark burnt into the video by AMV2
 if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll") else if (MencoderCodecs = "Amv3Codec.dll") {
 	;msgbox, Using Custom AMV2 Watermark Removal.
@@ -1739,7 +1759,7 @@ msgbox, %oython%
 return
 
 OutputLocation:
-if (RecompressVar = "FFmpeg") {
+if (RecompressVar = "FFmpeg") && (ForcedBake = 0) {
 	InputFolder := RecompressVar . "-Output\" . FFmpegCodecs
 	OutputFolder := RecompressVar . "-Output\" . FFmpegCodecs . "\Moshed"
 	FileCreateDir, %OutputFolder%
@@ -1768,6 +1788,14 @@ if (RecompressVar = "MEncoder") && if (isBatchInput = 1) {
 	FileCreateDir, %OutputFolder%
 	;msgbox, %OutputFolder%
 }
+
+;Wao now we can transfer datamoshed artifacts from MEncoder to FFmpeg, via baking since FFMpeg doesnt enjoy Tomatoes.
+if (RecompressVar = "FFmpeg") && (ForcedBake = 1) {
+	SplitPath, MencoderCodecs,,,, codecname,	
+	InputFolder := "MEncoder-Output\" . codecname
+	OutputFolder := RecompressVar . "-Output\" . FFmpegCodecs . "\Moshed"
+	FileCreateDir, %OutputFolder%
+}
 Return
 
 
@@ -1788,8 +1816,11 @@ if FileExist(CheckMe) {
 	FileDelete,%CheckMe%
 }
 
-runwait, %ComSpec% /c %python% tomato.py -i %InputFolder%/output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed.avi
-runwait, %ComSpec% /c %LemmeSeeIt%
+RunTomato := ComSpec . " /k " . python . " tomato.py -i " . InputFolder . "/output.avi -m " . TomatoMode . " -c " . TomatoFrameCount . " -n " . TomatoFramePosition . " ./" . OutputFolder . "/output-moshed.avi"
+msgbox, %RunTomato%
+runwait, %RunTomato%
+;runwait, %ComSpec% /k %python% tomato.py -i %InputFolder%/output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed.avi
+runwait, %ComSpec% /k %LemmeSeeIt%
 ;open custom baking menu afterwards
 BakeGUI()
 
@@ -1894,13 +1925,26 @@ Loop,%A_ScriptDir%\Batch-Output\*.avi
 Return
 
 ReCompressMoshedOutput:
-SourceFile := OutputFolder . "\output-moshed.avi"
+if (ItsANewSource = 1 ) && (ChexrWasUsed = 0) {
+	SourceFile := OutputFolder . "\output-moshed.avi"
+	msgbox, its new
+	
+}
+
+
+if (ItsANewSource = 0) && (ChexrWasUsed = 1) {
+	SourceFile := InputFolder . "\output.avi"
+	msgbox, its chexr
+	
+}
+
 
 if (RecompressVar = "MEncoder") {
 	msgbox, Compressing the moshed file,`nwith the current MEncoder vfw codec selected!
 	isRecompressed := 1
 	gosub, MEncoderCompression
 	isRecompressed := 0
+	ForcedBake := 0 ;Reset Forced Bake Var
 	return
 }
 
@@ -1909,6 +1953,7 @@ if (RecompressVar = "FFmpeg") {
 	isRecompressed := 1	
 	gosub, FFmpegCompression
 	isRecompressed := 0
+	ForcedBake := 0 ;Reset Forced Bake Var
 	return
 }
 
@@ -1993,7 +2038,9 @@ runwait, %LetseeIt%
 ;Clear the concat string.
 ConcatString := ""
 
-gosub, EnableGetDifference
+if (ForcedBake = 0) && (NoGetDiffPls = 0) { 
+	gosub, EnableGetDifference
+}
 Return
 
 PlsBakeYUV:
@@ -2024,12 +2071,20 @@ runwait, cmd.exe /c ffplay -i  %OutputFolder%\ImBaked.yuv -loop 0
 
 BakedFilename := "ImBaked.yuv"
 gosub, UnReverseVideo
-gosub, EnableGetDifference
+
+if (ForcedBake = 0) && (NoGetDiffPls = 0) { 
+	gosub, EnableGetDifference
+}
 Return
 
+;Wao now we can transfer datamoshed artifacts from MEncoder to FFmpeg, via baking since FFMpeg doesnt enjoy Tomatoes.
 ForceBake:
 BakeGUI()
 WinWaitClose, Shall We Bake Some More???
+gosub, OutputLocation
+SourceFile := OutputFolder . "\" . BakedFilename
+ForcedBake := 1
+NoGetDiffPls := 1
 Return
 
 NoReBake:
