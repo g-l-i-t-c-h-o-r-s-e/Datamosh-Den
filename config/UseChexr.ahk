@@ -10,6 +10,9 @@ if (AllowChexr = 0) {
 	Return
 }
 
+ItsANewSource := 0
+ChexrWasUsed := 1
+
 Gui, chexr:Color, DDCEE9
 SetWorkingDir %A_ScriptDir%
 SetBatchLines -1
