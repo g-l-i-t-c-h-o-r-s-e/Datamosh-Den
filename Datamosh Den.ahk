@@ -122,6 +122,7 @@ GuiControl, 1:Disable, ResolutionVar
 GuiControl, 1:Disable, FrameRateVar
 GuiControl, 1:Disable, Recompress
 
+MP4BakeOptions := " -ovc x264 -x264encopts crf=1.0 -nosound -noskip " ;NoSkip prevents duplicate/frozen frames on mp4 output.
 WebcamSource := ""
 isBatchFilename := 0
 RecompressVar := "MEncoder" ;Default Compressor.
@@ -136,7 +137,7 @@ ChexrWasUsed := 0
 ForcedBake := 0
 NoGetDiffPls := 0
 
-Gui Show, w485 h363, Datamosh Den - Ver 1.8.6 (Beta)
+Gui Show, w485 h363, Datamosh Den - Ver 1.8.7 (Beta)
 
 ;Check if newer MEncoder package is in folder, if so extract it.
 #Include config\GetFFmpeg.ahk
@@ -434,27 +435,31 @@ if (EncHue = 0) {
 ;EncodeReversibleFilterVal := ""
 }
 if (EncHue = 1) && (RecompressVar = "MEncoder") {
-	EncodeReversibleFilterVal .= "," . "hue=" . HueValue . ",scale" ;Scale is needed to correct the colorspace I guess?
+	EncodeReversibleFilterVal .= "," . "hue=" . HueValue . ":" . SatValue . ",scale" ;Scale is needed to correct the colorspace I guess?
 }
 if (EncHue = 1) && (RecompressVar = "FFmpeg") {
-	EncodeReversibleFilterVal .= "," . "hue=" . HueValue
+	EncodeReversibleFilterVal .= "," . "hue=" . HueValue . ":" . SatValue
 }
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 if (DecHue = 0) {
 ;DecodeReversibleFilterVal := ""
 }
 if (DecHue = 1) && !RegExMatch(HueValue,"(-)") && (RecompressVar = "MEncoder") {
-	DecodeReversibleFilterVal .= "," . "hue=-" . HueValue . ",scale"
+	DecodeReversibleFilterVal .= "," . "hue=-" . HueValue . ":" . SatValue . ",scale"
 }
 if (DecHue = 1) && !RegExMatch(HueValue,"(-)") && (RecompressVar = "FFmpeg") {
-	DecodeReversibleFilterVal .= "," . "hue=-" . HueValue
+	DecodeReversibleFilterVal .= "," . "hue=-" . ":" . HueValue . ":" . SatValue
 }
-if (DecHue = 1) && RegExMatch(HueValue,"(-)") && (RecompressVar = "FFmpeg") else if (RecompressVar = "MEncoder") {
+if (DecHue = 1) && RegExMatch(HueValue,"(-)") && (RecompressVar = "FFmpeg") or (RecompressVar = "MEncoder") {
 	if InStr(HueValue, "-") {
 		StringTrimLeft, HueValue2, HueValue, 1 ;Remove the negative symbol.
 	}
 	
-	DecodeReversibleFilterVal .= "," . "hue=" . HueValue2
+	if InStr(SatValue, "-") {
+		StringTrimLeft, SatValue2, SatValue, 1 ;Remove the negative symbol.
+	}
+	
+	DecodeReversibleFilterVal .= "," . "hue=" . HueValue2 . ":" . SatValue2
 }
 
 StringTrimLeft, EncodeReversibleFilterVal, EncodeReversibleFilterVal, 1 ;Remove extra comma
@@ -476,26 +481,40 @@ if (EncHue = 0) {
 
 if (EncHue = 1) {
 	Gui, hue:Color, DDCEE9	
-	Gui hue:Add, Button, x12 y99 w154 h33 gCloseHueMenu, Apply Hue Changes
+	Gui hue:Add, Button, x11 y132 w154 h33 gCloseHueMenu, Apply Hue Changes
 	Gui hue:Add, Slider, x2 y61 w172 h32 Range-180-180 vHueValue gHueColorSlider AltSubmit, 0
 	Gui hue:Add, Text, x85 y35 w16 h23 +0x200, 0
 	Gui hue:Add, Text, x149 y36 w24 h23 +0x200, 180
 	Gui hue:Add, Text, x5 y35 w24 h23 +0x200, -180
 	Gui hue:Font, s9, Consolas
 	Gui hue:Add, Text, x8 y0 w172 h33 +0x200, Ghetto Hue Color Picker
+	Gui hue:Add, Slider, x2 y97 w172 h32 Range-10-10 vSatValue gSaturationColorSlider AltSubmit, 1
+	
+	;Gui Show, w176 h170, 
 	Gui hue:Font
-	Gui hue:Show, w176 h136, `n
+	Gui hue:Show, w176 h170, `n
 	Gui hue:-sysmenu
 }
 Return
 
+
 HueColorSlider:
-tooltip % HueValue
+tooltip % "Hue: " . HueValue
 SetTimer, RemoveToolTip2, 500
 return
 
 RemoveToolTip2:
 SetTimer, RemoveToolTip2, Off
+ToolTip
+return
+
+SaturationColorSlider:
+tooltip % "Saturation: " . SatValue
+SetTimer, RemoveToolTip4, 500
+return
+
+RemoveToolTip4:
+SetTimer, RemoveToolTip4, Off
 ToolTip
 return
 
@@ -630,7 +649,7 @@ fra := Mod(int, 10)
 fra := SubStr(fra, InStr(fra,".")+1, 1 )
 val :=  Floor(int) "." fra
 VQuality := val
-tooltip % VQuality
+tooltip % "Video Quality: " . VQuality
 SetTimer, RemoveToolTip1, 500
 return
 
@@ -1077,7 +1096,7 @@ if (isBatchFilename = 1) { ; This is where the Batch output stuff happens.
 
 
 MECommand := cmd.exe /k "mencoder " . MEncoderOptions . " " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config
-  ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
+  msgbox, %MECommand% ;Used for checking of the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
 MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
@@ -2019,7 +2038,6 @@ FileDelete, ImBaked.mp4
 gosub, CustomCodecShit ;Temporary fix for HEVC/H265 decoding.
 gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
 
-TempMencoderOptions := "-nosound -noskip" ;NoSkip prevents duplicate/frozen frames on mp4 output.
 BakedFilename := "ImBaked.mp4"
 inputFile := "\output-moshed.avi "
 if (BatchBake = 1) {
@@ -2028,9 +2046,9 @@ if (BatchBake = 1) {
 	OutputFolder := ""
 }
 
-MP4Bake := ComSpec . " /c " "mencoder " . CustomCodecFix . " " . OutputFolder . inputFile . " -sws 4 " . DecodeReversibleFilterVal . " -ovc x264 -x264encopts crf=1.0 " . TempMencoderOptions " -o " . OutputFolder . BakedOutputFolder . "\" . BakedFilename . " -of lavf"
-
+MP4Bake := ComSpec . " /c " "mencoder " . CustomCodecFix . " " . OutputFolder . inputFile . " -sws 4 " . DecodeReversibleFilterVal . MP4BakeOptions " -o " . OutputFolder . BakedOutputFolder . "\" . BakedFilename . " -of lavf"
 ;msgbox, %MP4Bake%
+
 runwait, %MP4Bake%
 sleep, 20
 WinWaitClose, cmd
@@ -2084,6 +2102,7 @@ Return
 
 ;Wao now we can transfer datamoshed artifacts from MEncoder to FFmpeg, via baking since FFMpeg doesnt enjoy Tomatoes.
 ForceBake:
+msgbox, This is useful for transfering an datamoshed avi to FFmpeg.`nTo do so after this, select the codec and hit Recompress`n`nOtherwise just do as you were.
 NoGetDiffPls := 1
 BakeGUI()
 
