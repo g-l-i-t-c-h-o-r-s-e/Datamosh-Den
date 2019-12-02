@@ -28,7 +28,7 @@ Hopefully this will make Datamoshing more accesible to people on Windows who are
 
 • Compress the datamoshed avi again with a new codec to stack compression artifacts!
 
-• Reversible filters you can apply via Encode and or Decode (hue, transpose, flip, reverse, etc).
+• Reversible filters you can apply via Encode and or Decode (hue, transpose, invert, reverse, etc).
 
 • Sync Datamoshed Video back to the original duration and optionally mix the original audio back in!
 
