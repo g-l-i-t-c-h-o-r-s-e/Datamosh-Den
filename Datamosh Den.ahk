@@ -1077,7 +1077,7 @@ if (isBatchFilename = 1) { ; This is where the Batch output stuff happens.
 
 
 MECommand := cmd.exe /k "mencoder " . MEncoderOptions . " " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config
-  msgbox, %MECommand% ;Used for checking of the command syntax is correct.
+  ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
 MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
@@ -1344,7 +1344,7 @@ SourceFile := InputFolder . "\Moshed\" . BakedFilename
 }
 	
 FFCommand := ComSpec . " /k " . " ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " " . OutputFilename . " -y"
-MsgBox, %FFCommand%
+  ;MsgBox, %FFCommand%
 
   ;Execute FFmpeg Here, also reads Standard Error Output.
 FFoutput := ComObjCreate("WScript.Shell").Exec(FFCommand).StdErr.ReadAll()
@@ -1353,7 +1353,6 @@ FFoutput := ComObjCreate("WScript.Shell").Exec(FFCommand).StdErr.ReadAll()
 StartingPos := InStr(FFoutput, "[")
 FFoutput := SubStr(FFoutput, StartingPos + 25)
 
-msgbox, %FFoutput%
 
 ;Remove any extra avi made by the reverse video filter.
 CheckFile := InputFolder . "\output2.avi"
@@ -1807,6 +1806,8 @@ Gui, Submit, Nohide
 gosub, CustomCodecShit
 gosub, TestPython
 gosub, OutputLocation
+NoGetDiffPls := 0
+ForcedBake := 0
 
 LemmeSeeIt := "mplayer " . CustomCodecFix . " " . OutputFolder . "\output-moshed.avi -loop 0"
 
@@ -1816,11 +1817,11 @@ if FileExist(CheckMe) {
 	FileDelete,%CheckMe%
 }
 
-RunTomato := ComSpec . " /k " . python . " tomato.py -i " . InputFolder . "/output.avi -m " . TomatoMode . " -c " . TomatoFrameCount . " -n " . TomatoFramePosition . " ./" . OutputFolder . "/output-moshed.avi"
-msgbox, %RunTomato%
-runwait, %RunTomato%
+RunTomato := ComSpec . " /c " . python . " tomato.py -i " . InputFolder . "/output.avi -m " . TomatoMode . " -c " . TomatoFrameCount . " -n " . TomatoFramePosition . " ./" . OutputFolder . "/output-moshed.avi"
+;msgbox, %RunTomato%
 ;runwait, %ComSpec% /k %python% tomato.py -i %InputFolder%/output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed.avi
-runwait, %ComSpec% /k %LemmeSeeIt%
+runwait, %RunTomato%
+runwait, %ComSpec% /c %LemmeSeeIt%
 ;open custom baking menu afterwards
 BakeGUI()
 
@@ -1836,6 +1837,8 @@ Gui, Submit, Nohide
 gosub, CustomCodecShit
 gosub, TestPython
 gosub, OutputLocation
+NoGetDiffPls := 0
+ForcedBake := 0
 
 LemmeSeeIt := "mplayer " . CustomCodecFix . " " . OutputFolder . "/output-moshed2.avi -loop 0"
 
@@ -1906,6 +1909,8 @@ Loop,%A_ScriptDir%\Batch-Output\*.avi
 		     ;open custom baking menu afterwards
 			BatchBake := 1
 			countfiles := 0
+			NoGetDiffPls := 0
+			ForcedBake := 0			
 			
 			LemmeSeeItBatch := "mplayer " . ConcatString
 			runwait, %LemmeSeeItBatch%
@@ -1926,16 +1931,12 @@ Return
 
 ReCompressMoshedOutput:
 if (ItsANewSource = 1 ) && (ChexrWasUsed = 0) {
-	SourceFile := OutputFolder . "\output-moshed.avi"
-	msgbox, its new
-	
+	SourceFile := OutputFolder . "\output-moshed.avi"	
 }
 
 
 if (ItsANewSource = 0) && (ChexrWasUsed = 1) {
-	SourceFile := InputFolder . "\output.avi"
-	msgbox, its chexr
-	
+	SourceFile := InputFolder . "\output.avi"	
 }
 
 
@@ -1945,6 +1946,7 @@ if (RecompressVar = "MEncoder") {
 	gosub, MEncoderCompression
 	isRecompressed := 0
 	ForcedBake := 0 ;Reset Forced Bake Var
+	;NoGetDiffPls := 0	
 	return
 }
 
@@ -1954,6 +1956,7 @@ if (RecompressVar = "FFmpeg") {
 	gosub, FFmpegCompression
 	isRecompressed := 0
 	ForcedBake := 0 ;Reset Forced Bake Var
+	;NoGetDiffPls := 0	
 	return
 }
 
@@ -2077,14 +2080,19 @@ if (ForcedBake = 0) && (NoGetDiffPls = 0) {
 }
 Return
 
+
+
 ;Wao now we can transfer datamoshed artifacts from MEncoder to FFmpeg, via baking since FFMpeg doesnt enjoy Tomatoes.
 ForceBake:
+NoGetDiffPls := 1
 BakeGUI()
+
 WinWaitClose, Shall We Bake Some More???
 gosub, OutputLocation
+
 SourceFile := OutputFolder . "\" . BakedFilename
 ForcedBake := 1
-NoGetDiffPls := 1
+NoGetDiffPls := 0
 Return
 
 NoReBake:
