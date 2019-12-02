@@ -56,8 +56,6 @@ Gui Add, Text, x219 y56 w65 h14 +BackgroundTrans, Extra Stuff
 Gui Add, Button, x406 y31 w47 h21 gMakeChexrGui, Hex Edit
 Gui Add, Button, x406 y52 w47 h28 gForceBake, Force Bake
 
-
-
 ;MEncoder GUI Stuff
 Gui Add, GroupBox, x17 y97 w168 h125 ,
 Gui Add, ComboBox, x37 y184 w120 vMencoderCodecs Choose6, %CodecList%
@@ -139,10 +137,9 @@ NoGetDiffPls := 0
 
 Gui Show, w485 h363, Datamosh Den - Ver 1.8.7 (Beta)
 
-;Check if newer MEncoder package is in folder, if so extract it.
-#Include config\GetFFmpeg.ahk
-#Include config\GetDifference.ahk
-#Include config\UseChexr.ahk
+#Include config\GetFFmpeg.ahk ;Check if newer MEncoder package is in folder, if so extract it.
+#Include config\GetDifference.ahk ;Get the duration difference between the moshed and original video.
+#Include config\UseChexr.ahk ;Hex edit the AVI to force compression artifacts.
 Return
 
 
@@ -219,14 +216,12 @@ gosub, EnableForceRes
 huh = oshitwaddupyowhatareudoingtodayimdoingjustdandythanksforaskinglolihopeyouhaveawonderfuldaykthxbaikmsroflmao
 GuiControl, Disable, CustomDecodeFilterVal
 GuiControl, Disable, CustomEncodeFilterVal
-;Gui Add, Button, x93 y169 w81 h28 gCloseExtraOptions, Submit
 Gui Add, Button, x93 y148 w81 h27 gCloseExtraOptions, Submit
 
 
 
-
-GuiControlGet, ForceResVar,,ForceRes
 ;Close GUI after hitting ENTER Key 
+GuiControlGet, ForceResVar,,ForceRes
 OnMessage(0x100, "OnKeyDown")
 OnKeyDown(wParam)
 {
@@ -610,7 +605,7 @@ gosub, EnableForceRes
 
 if (DecRev = 1) {
 	msgbox, aw shit you have reverse enabled for decoding, here we go.`nBtw if probably won't work well with the video/audio sync options.
-	inputFile := OutputFolder . "\ImBaked.yuv "	
+	inputFile := OutputFolder . "\" . BakedFilename	
 	FFReverseCompress := ComSpec . " /k " . " ffmpeg -i " . chr(0x22) . inputFile . chr(0x22) . " " . ResolutionVar . FrameRate . " -f avi -c:v huffyuv -vf reverse " . InputFolder . "\unreversed-output.avi -y"
 	msgbox, %FFReverseCompress%
 	runwait, %FFReverseCompress%	
@@ -1363,7 +1358,7 @@ SourceFile := InputFolder . "\Moshed\" . BakedFilename
 }
 	
 FFCommand := ComSpec . " /k " . " ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " " . OutputFilename . " -y"
-  ;MsgBox, %FFCommand%
+  MsgBox, %FFCommand%
 
   ;Execute FFmpeg Here, also reads Standard Error Output.
 FFoutput := ComObjCreate("WScript.Shell").Exec(FFCommand).StdErr.ReadAll()
@@ -1772,9 +1767,7 @@ python tomato.py -i input.avi -m overlapped -c 4 -n 2 output.avi
 )
 Return
 
-!F7::
-msgbox, %oython%
-return
+
 
 OutputLocation:
 if (RecompressVar = "FFmpeg") && (ForcedBake = 0) {
@@ -1827,6 +1820,7 @@ gosub, TestPython
 gosub, OutputLocation
 NoGetDiffPls := 0
 ForcedBake := 0
+ChexrWasUsed := 0 ;If you use Datamosh It immediately after using chexr, this will reset this var and use "output-moshed.avi" instead of "output.avi".
 
 LemmeSeeIt := "mplayer " . CustomCodecFix . " " . OutputFolder . "\output-moshed.avi -loop 0"
 
@@ -1950,12 +1944,19 @@ Return
 
 ReCompressMoshedOutput:
 if (ItsANewSource = 1 ) && (ChexrWasUsed = 0) {
-	SourceFile := OutputFolder . "\output-moshed.avi"	
+	SourceFile := OutputFolder . "\output-moshed.avi"
+	msgbox, 1
 }
 
-
 if (ItsANewSource = 0) && (ChexrWasUsed = 1) {
-	SourceFile := InputFolder . "\output.avi"	
+	SourceFile := InputFolder . "\output.avi"
+	msgbox, 2
+}
+
+if (ItsANewSource = 0) && (ChexrWasUsed = 0) {
+	SourceFile := OutputFolder . "\output-moshed.avi"	
+	msgbox, 3
+	
 }
 
 
@@ -1981,8 +1982,10 @@ if (RecompressVar = "FFmpeg") {
 
 if (RecompressVar = "AMV") {
 	msgbox, Compressing the moshed file,`nwith the beta AMV2 Watermark removal!
+	isRecompressed := 1	
 	gosub, CustomAMVCompression
 	isRecompressed := 0
+	ForcedBake := 0
 	return
 }
 Return
@@ -2039,14 +2042,23 @@ gosub, CustomCodecShit ;Temporary fix for HEVC/H265 decoding.
 gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
 
 BakedFilename := "ImBaked.mp4"
-inputFile := "\output-moshed.avi "
+inputFile := OutputFolder . "\output-moshed.avi "
 if (BatchBake = 1) {
 	inputFile := " " . ConcatString . " "
 	BakedOutputFolder := OutputFolder
 	OutputFolder := ""
 }
 
-MP4Bake := ComSpec . " /c " "mencoder " . CustomCodecFix . " " . OutputFolder . inputFile . " -sws 4 " . DecodeReversibleFilterVal . MP4BakeOptions " -o " . OutputFolder . BakedOutputFolder . "\" . BakedFilename . " -of lavf"
+if (ForcedBake = 1) {
+	inputFile := InputFolder . "\output.avi "
+	
+}
+
+if RegExMatch(DecodeReversibleFilterVal,"(-vf hue=:)") {
+	DecodeReversibleFilterVal := "" ;clear the var, Temporary bug fix.
+}
+
+MP4Bake := ComSpec . " /c " "mencoder " . CustomCodecFix . " " . inputFile . " -sws 4 " . DecodeReversibleFilterVal . MP4BakeOptions " -o " . OutputFolder . BakedOutputFolder . "\" . BakedFilename . " -of lavf"
 ;msgbox, %MP4Bake%
 
 runwait, %MP4Bake%
@@ -2075,14 +2087,20 @@ FileDelete, %OutputFolder%\ImBaked.yuv
 gosub, CustomCodecShit
 gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
 
-inputFile := "\output-moshed.avi "
+inputFile := OutputFolder . "\output-moshed.avi "
 if (BatchBake = 1) {
 	inputFile := " " . ConcatString . " "
 	OutputFolder := ""
 }
 
-YUVBake := "mplayer " . CustomCodecFix . " -sws 4 " . DecodeReversibleFilterVal . " " . " -vo yuv4mpeg " . OutputFolder . inputFile
+if (ForcedBake = 1) {
+	inputFile := InputFolder . "\output.avi "
+	
+}
+	
+YUVBake := "mplayer " . CustomCodecFix . " -sws 4 " . DecodeReversibleFilterVal . " " . " -vo yuv4mpeg " . inputFile
 ;msgbox, %YUVBake%
+
 runwait, %YUVBake%
 sleep, 20
 WinWaitClose, cmd
@@ -2104,13 +2122,13 @@ Return
 ForceBake:
 msgbox, This is useful for transfering an datamoshed avi to FFmpeg.`nTo do so after this, select the codec and hit Recompress`n`nOtherwise just do as you were.
 NoGetDiffPls := 1
+ForcedBake := 1
 BakeGUI()
 
 WinWaitClose, Shall We Bake Some More???
 gosub, OutputLocation
 
 SourceFile := OutputFolder . "\" . BakedFilename
-ForcedBake := 1
 NoGetDiffPls := 0
 Return
 
