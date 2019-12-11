@@ -82,9 +82,9 @@ Gui Add, Text, x293 y195 w62 h23 +0x200 +BackgroundTrans, Frame Count
 Gui Add, Text, x288 y242 w71 h23 +0x200 +BackgroundTrans, Frame Position
 Gui Add, Text, x282 y148 w81 h23 +0x200 +BackgroundTrans, Datamosh Mode
 Gui Add, Button, x269 y289 w110 h46 vTomatoMOSHIT gCommenceTomatoDatamosh -E0x200 BackgroundTrans -Border, DATAMOSH IT
-WinSet, Region, % "0-0" "W" 110-1 " " "H" 46-1 R10-10, DATAMOSH IT
-GuiControl, Move, TomatoMOSHIT, w110-2 h46-2 x269-1 y289-1
 
+;WinSet, Region, % "0-0" "W" 110-1 " " "H" 46-1 R10-10, DATAMOSH IT
+;GuiControl, Move, TomatoMOSHIT, w110-2 h46-2 x269-1 y289-1
 ;Trying to remove the button borders :(
 ;WinSet, Region, Region, 1-1 W200 H150, DATAMOSH IT
 ;GuiControl, Move, TomatoMOSHIT, % "x" 269 " y" 289 " w" 110 - 1
@@ -120,6 +120,7 @@ GuiControl, 1:Disable, ResolutionVar
 GuiControl, 1:Disable, FrameRateVar
 GuiControl, 1:Disable, Recompress
 
+;You probably shouldn't touch any of these but the MP4BakeOptions, if for example you want to remove -noskip.
 MP4BakeOptions := " -ovc x264 -x264encopts crf=1.0 -nosound -noskip " ;NoSkip prevents duplicate/frozen frames on mp4 output.
 WebcamSource := ""
 isBatchFilename := 0
@@ -134,10 +135,11 @@ AllowChexr := 0
 ChexrWasUsed := 0
 ForcedBake := 0
 NoGetDiffPls := 0
+NewOptions := 1
 
-Gui Show, w485 h363, Datamosh Den - Ver 1.8.7 (Beta)
+Gui Show, w485 h363, Datamosh Den - Ver 1.8.8 (Beta)
 
-#Include config\GetFFmpeg.ahk ;Check if newer MEncoder package is in folder, if so extract it.
+#Include config\GetFFmpeg.ahk ;Check if FFmpeg and newer MEncoder package is in folder, if so extract it.
 #Include config\GetDifference.ahk ;Get the duration difference between the moshed and original video.
 #Include config\UseChexr.ahk ;Hex edit the AVI to force compression artifacts.
 Return
@@ -175,42 +177,55 @@ if (IsOtherOptionsOn = 0) {
 }
 Return
 
-#Include %A_ScriptDir%\config\AutoXYWH.ahk
+#Include config\AutoXYWH.ahk
 OtherOptions:
-
+DetectHiddenWindows, off
 EncodeReversibleFilterVal := "" ;Reset Filter Vals
 DecodeReversibleFilterVal := "" ;Reset Filter Vals
 
-Gui, New ;Needed for AutoXYWH.ahk to work on a second GUI window.
+if(WinExist("Datamosh ")) && (NewOptions = 1) {
+	gui, New
+	NewOptions := 0
+	sleep, 200
+	Gui, +Hwndgui_id	
+}
+else
+
+if(!WinExist("Extra Options")) {
+      WinShow, ahk_id %gui_id%
+return
+}
+
 Gui, Color, DDCEE9
 Gui  +Resize
-Gui Add, CheckBox, x12 y28 w120 h23 vEncHori, Horizontal Flip
-Gui Add, CheckBox, x136 y28 w120 h23 +0x220 vDecHori, Horizontal Flip
-Gui Add, CheckBox, x12 y53 w120 h23 vEncVert, Vertical Flip
-Gui Add, CheckBox, x136 y53 w120 h23 +0x220 vDecVert, Vertical Flip
-Gui Add, CheckBox, x12 y78 w120 h23 vEncTrans, Transpose
-Gui Add, CheckBox, x136 y78 w120 h23 +0x220 vDecTrans, Transpose
+Gui Add, Button, x10 y330 w81 h27 gSuperHiddenCustomPresets, oWo
+Gui Add, CheckBox, x12 y28 w120 h23 vEncHori gDisableCustomFilters, Horizontal Flip
+Gui Add, CheckBox, x136 y28 w120 h23 +0x220 vDecHori gDisableCustomFilters, Horizontal Flip
+Gui Add, CheckBox, x12 y53 w120 h23 vEncVert gDisableCustomFilters, Vertical Flip
+Gui Add, CheckBox, x136 y53 w120 h23 +0x220 vDecVert gDisableCustomFilters, Vertical Flip
+Gui Add, CheckBox, x12 y78 w120 h23 vEncTrans gDisableCustomFilters, Transpose
+Gui Add, CheckBox, x136 y78 w120 h23 +0x220 vDecTrans gDisableCustomFilters, Transpose
 Gui Font, s9 Underline, Verdana
 Gui Add, Text, x12 y2 w120 h23 +0x200, Encoding Filters:
 Gui Font
 Gui Font, s9 Underline, Verdana
 Gui Add, Text, x136 y2 w120 h23 +0x200 +0x2, Decoding Filters:
 Gui Font
-Gui Add, CheckBox, x12 y103 w60 h23 vEncRev, Reverse
-Gui Add, CheckBox, x196 y103 w60 h23 +0x220 vDecRev, Reverse
-Gui Add, CheckBox, x12 y153 w42 h23 vEncHue gEnableHueSlider, Hue
-Gui Add, CheckBox, x215 y153 w41 h23 +0x220 vDecHue, Hue
-Gui Add, CheckBox, x12 y128 w60 h23 vEncInv, Invert
-Gui Add, CheckBox, x196 y128 w60 h23 +0x220 vDecInv, Invert
-Gui Add, Edit, hWndhEdtValue2 x153 y241 w109 h60 vCustomDecodeFilterVal
+Gui Add, CheckBox, x12 y103 w60 h23 vEncRev gDisableCustomFilters, Reverse
+Gui Add, CheckBox, x196 y103 w60 h23 +0x220 vDecRev gDisableCustomFilters, Reverse
+Gui Add, CheckBox, x12 y153 w42 h23 vEncHue gEnableHueSlider gDisableCustomFilters, Hue
+Gui Add, CheckBox, x215 y153 w41 h23 +0x220 vDecHue gDisableCustomFilters, Hue
+Gui Add, CheckBox, x12 y128 w60 h23 vEncInv gDisableCustomFilters, Invert
+Gui Add, CheckBox, x196 y128 w60 h23 +0x220 vDecInv gDisableCustomFilters, Invert
+Gui Add, Edit, hWndhEdtValue2 x153 y241 w109 h60 vCustomDecodeFilterVal -VScroll
 Gui Font, s8, Georgia
-Gui Add, Text, x10 y208 w95 h31 +Disabled, Custom Encode`n           Filter:
+Gui Add, Text, x10 y208 w95 h31 +Disabled vEncText, Custom Encode`n           Filter:
 Gui Font
-Gui Add, CheckBox, x26 y222 w13 h13 vEnableCustomEncodeWindowVar gEnableCustomEncodeWindow +Disabled, CheckBox
-Gui Add, Edit, hWndhEdtValue x5 y241 w109 h60 vCustomEncodeFilterVal
+Gui Add, CheckBox, x26 y222 w13 h13 vEnableCustomEncodeWindowVar gEnableCustomEncodeWindow, CheckBox
+Gui Add, Edit, hWndhEdtValue x5 y241 w109 h60 vCustomEncodeFilterVal -VScroll,-lavfi "hue=h=2500/12*mod(t\,2500):s=3"
 Gui Font, s8, Georgia
-Gui Add, Text, x161 y208 w95 h31 +Disabled, Custom Decode`n           Filter:
-Gui Add, CheckBox, x177 y223 w13 h13 vEnableCustomDecodeWindowVar gEnableCustomDecodeWindow +Disabled, CheckBox
+Gui Add, Text, x161 y208 w95 h31 +Disabled vDecText, Custom Decode`n           Filter:
+Gui Add, CheckBox, x177 y223 w13 h13 vEnableCustomDecodeWindowVar gEnableCustomDecodeWindow, CheckBox
 Gui Font
 gosub, EnableForceRes
 huh = oshitwaddupyowhatareudoingtodayimdoingjustdandythanksforaskinglolihopeyouhaveawonderfuldaykthxbaikmsroflmao
@@ -249,9 +264,7 @@ OnKeyDown(wParam)
 	{
 		if (wParam = 13) ;This is the Enter Key Param
 		{
-			Gui, Submit, NoHide			
-			msgbox, Using the selected %RecompressVar% Filters!
-			Gui, Destroy
+			gosub, CloseExtraOptions
 		}
 	}
 }
@@ -261,40 +274,92 @@ Gui Show, w267 h305, Extra Options - Press The Enter Key When Done`n-%huh%
 Gui, +MinSize +MinSize267x ;Limit the how small option the window gets :3 
 Return
 
-CloseExtraOptions:
-Gui, Submit, NoHide			
-msgbox, Using the selected %RecompressVar% Filters!
-Gui, Destroy
-Return
-
 
 
 EnableCustomEncodeWindow:
 GuiControlGet, EnableCustomEncodeWindowVar
 if (EnableCustomEncodeWindowVar = 0) {
 	GuiControl, Disable, CustomEncodeFilterVal
+	GuiControl, Disable, EncText
+	
+	
 }
 
 if (EnableCustomEncodeWindowVar = 1) {
 	GuiControl, Enable, CustomEncodeFilterVal
+	GuiControl, Enable, EncText
+	
 }
+
+;Reset other controls since you're using the custom filters instead of my presets and shit.
+GuiControl,,EncHori,0
+GuiControl,,DecHori,0
+GuiControl,,EncVert,0
+GuiControl,,DecVert,0
+GuiControl,,EncTrans,0
+GuiControl,,DecTrans,0
+GuiControl,,EncRev,0
+GuiControl,,DecRev,0
+GuiControl,,EncInv,0
+GuiControl,,DecInv,0
+GuiControl,,EncHue,0
+GuiControl,,DecHue,0
 Return
 
 EnableCustomDecodeWindow:
 GuiControlGet, EnableCustomDecodeWindowVar
 if (EnableCustomDecodeWindowVar = 0) {
 	GuiControl, Disable, CustomDecodeFilterVal
+	GuiControl, Disable, DecText
+	
 }
 
 if (EnableCustomDecodeWindowVar = 1) {
 	GuiControl, Enable, CustomDecodeFilterVal
+	GuiControl, Enable, DecText
+	
+}
+
+;Reset other controls since you're using the custom filters instead of my presets and shit.
+GuiControl,,EncHori,0
+GuiControl,,DecHori,0
+GuiControl,,EncVert,0
+GuiControl,,DecVert,0
+GuiControl,,EncTrans,0
+GuiControl,,DecTrans,0
+GuiControl,,EncRev,0
+GuiControl,,DecRev,0
+GuiControl,,EncInv,0
+GuiControl,,DecInv,0
+GuiControl,,EncHue,0
+GuiControl,,DecHue,0
+Return
+
+
+DisableCustomFilters:
+if (EnableCustomEncodeWindowVar = 1) {
+	GuiControl,,EnableCustomEncodeWindowVar,0
+	GuiControl, Disable, CustomEncodeFilterVal
+	GuiControl, Disable, EncText
+	
+}
+
+if (EnableCustomDecodeWindowVar = 1) {
+	GuiControl,,EnableCustomDecodeWindowVar,0
+	GuiControl, Disable, CustomDecodeFilterVal
+	GuiControl, Disable, DecText
+	
 }
 Return
 
-GuiSize: ;Resize the custom filter edit box natively with the GUI size.
-If (A_EventInfo == 0) {
-	Return
-}
+
+GuiSize:
+;Resize the custom filter edit box natively with the GUI size.
+;If (A_EventInfo == 0) {
+;	Return
+;}
+;Removed the above cus it was messing up my shit for some reason.
+
 GuiControlGet, EnableCustomEncodeWindowVar
 if (EnableCustomEncodeWindowVar = 1) {
 	AutoXYWH("wh*", hEdtValue)
@@ -302,10 +367,42 @@ if (EnableCustomEncodeWindowVar = 1) {
 
 GuiControlGet, EnableCustomDecodeWindowVar
 if (EnableCustomDecodeWindowVar = 1) {
-     AutoXYWH("wh*", hEdtValue2)
+	AutoXYWH("wh*", hEdtValue2)
 }
 Return
 
+SuperHiddenCustomPresets:
+k += 2
+m := Mod(k, 3)
+s := Floor(m) 
+
+sleep, 10
+cus_presets := ["-lavfi " . chr(0x22) . "split=outputs=4[1][2][3][4];[1]setpts='if(eq(N,0),PTS,PTS+0.1/TB)'[1];[2]setpts='if(eq(N,0),PTS,PTS+0.6/TB)'[2];[1][2]blend=all_mode=addition128[v1];[3]setpts='if(eq(N,0),PTS,PTS+1.1/TB)'[3];[4]setpts='if(eq(N,0),PTS,PTS+1.6/TB)'[4];[3][4]blend=all_mode=addition128[v2];[v2][v1]mix=weights=100 100" . chr(0x22) 
+                , "-lavfi " . chr(0x22) . "transpose=1,split[a][b];[b]hflip[b];[a][b]hstack[c];[c]split[d][e];[e]vflip[e];[d][e]vstack,transpose=1" . chr(0x22)
+                , "-lavfi " . chr(0x22) . "split=outputs=4[1][2][3][4];[1]setpts='if(eq(N,0),PTS,PTS+0.1/TB)'[1];[2]setpts='if(eq(N,0),PTS,PTS+0.6/TB)'[2];[1][2]blend=all_mode=addition128[v1];[3]setpts='if(eq(N,0),PTS,PTS+1.1/TB)'[3];[4]setpts='if(eq(N,0),PTS,PTS+1.6/TB)'[4];[3][4]blend=all_mode=addition128[v2];[v2][v1]mix=weights=100 100,hue=h=2500/12*mod(t\,2500):s=3" . chr(0x22)]
+
+CustomPreset := cus_presets[s+1]
+
+sleep, 10
+GuiControl,, CustomEncodeFilterVal, %CustomPreset%
+Return
+
+CloseExtraOptions:
+Gui, Submit, NoHide
+
+if (RecompressVar = "MEncoder") && (EnableCustomEncodeWindowVar = 1) && RegExMatch(CustomEncodeFilterVal,"(-lavfi )") {
+	msgbox, Looks like you're using an FFmpeg Filter :o`nMake sure FFMpeg Options/Codecs is selected if using the -lavfi flag!!!
+	Return
+}
+
+if (RecompressVar = "MEncoder") && (EnableCustomEncodeWindowVar = 1) && RegExMatch(CustomEncodeFilterVal,"( frei0r)") {
+	msgbox, Looks like you're using an Frei0r Filter :o`nPlease use FFmpeg Options/Codecs for this only.`n`nFor now.
+	Return
+}
+
+msgbox, Using the selected %RecompressVar% Filters!
+Gui, Hide
+Return
 
 
 GetFilters:
@@ -620,7 +717,7 @@ if (DecRev = 1) {
 	
 }
 else
-Return
+	Return
 
 
 
@@ -731,9 +828,9 @@ if (IsBatchInput = 1) {
 }
 else
 	FileSelectFile, SourceFile,,,Select Source For Datamoshing......................................
-     DefaultSourceFile := SourceFile
-	ItsANewSource := 1
-     if errorlevel {
+DefaultSourceFile := SourceFile
+ItsANewSource := 1
+if errorlevel {
 	msgbox, You Didnt Select Anything lol
 	return
 }
@@ -857,7 +954,7 @@ if (ForceRate = 0) && (ForceRes = 1) && (IsOtherOptionsOn = 0) && (RecompressVar
 
 
 if (ForceRate = 1) && (ForceRes = 1) && (IsOtherOptionsOn = 0) && (RecompressVar = "FFmpeg") {
-	FrameRate := " -vf fps=" . FrameRateVar . "," . "scale=" . ResolutionVa
+	FrameRate := " -vf fps=" . FrameRateVar . "," . "scale=" . ResolutionVar
 	ResolutionVar := ""
 }
 
@@ -875,7 +972,6 @@ Return
 ;WIP
 
 GetFilterOptionsAndFixStrings:
-
 ;If force scale is enabled, add a comma and scale filter before all of these.
 gosub, EnableForceRes			
 if (GlobalResolutionVar = 1) && (IsOtherOptionsOn = 1) {
@@ -920,7 +1016,7 @@ if (GlobalResolutionVar = 0) && if (UseOtherOptions = 1) {
 if (GlobalResolutionVar = 1) && (UseOtherOptions = 1) {
 ;ResolutionVar := ""
 }
- 
+
  ;if filters aren't selected, clear the entire variables.
 if (DecodeReversibleFilterVal = " -vf ") {
 	DecodeReversibleFilterVal := ""
@@ -966,14 +1062,25 @@ if (ForceRate = 1) && (ForceRes = 1) && (IsOtherOptionsOn = 0) && (RecompressVar
 	EncodeReversibleFilterVal := ""	
 }
 
+
+;Important Bug Fixes Here!
 if (ForceRes = 0) && (IsOtherOptionsOn = 1) {
 	ResolutionVar := "" ;Reset the Forced Resolution Variable, this was a very annoying bug idk how else to fix.
 }
 
 if (ForceRes = 1) && (IsOtherOptionsOn = 1) {
 	;EncodeReversibleFilterVal := ""	
+	TempResolutionVar := ResolutionVar ;Allocate the string in the ResolutionVar variable before clearing, so we can use it in the Custom Encode and Decode Filters.
 	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
 }
+
+if (ForceRes = 1) && (IsOtherOptionsOn = 0) {
+	;EncodeReversibleFilterVal := ""	
+	TempResolutionVar := ResolutionVar ;Allocate the string in the ResolutionVar variable before clearing, so we can use it in the Custom Encode and Decode Filters.
+	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
+}
+
+
 
 ;Messy bug fixes idk im very sleepy.
 if (ForceRate = 1) && (ForceRes = 0) && (IsOtherOptionsOn = 1) && (RecompressVar = "FFmpeg") {
@@ -1015,10 +1122,96 @@ if (ForceRate = 1) && (ForceRes = 0) && (IsOtherOptionsOn = 0) && (RecompressVar
 Return
 
 
+CustomFiltersOptions:
+;Custom Encode Filter Shit Should Be Here!!!
+if (EnableCustomEncodeWindowVar = 1) && (ForceRes = 0) && (ForceRate = 0) && (IsOtherOptionsOn = 1) {
+	EncodeReversibleFilterVal := " " . CustomEncodeFilterVal
+	;msgbox, why
+	Return
+}
+
+if (EnableCustomEncodeWindowVar = 1) && (ForceRes = 1) && (ForceRate = 0) && (IsOtherOptionsOn = 1) {
+	TempResolutionVar := ",scale=" . StrReplace(TempResolutionVar, "x", ":")		
+	EncodeReversibleFilterVal := " " . CustomEncodeFilterVal . TempResolutionVar
+	;msgbox, wao1
+	Return
+}
+
+if (EnableCustomEncodeWindowVar = 1) && (ForceRes = 1) && (ForceRate = 1) && (IsOtherOptionsOn = 1) {
+	;Made this bug fix cus FFmpeg doesn't like trailing commas in filter options.
+	NewString := FrameRate
+	ReverseString := DllCall( "msvcrt.dll\_strrev", Str, NewString, UInt,0, Str) ;Reverses string cus idk how to use SubStr backwards.
+	CheckComma := SubStr(ReverseString, 1, 1) ;Crop string down to first char.
+	if (CheckComma = ",") { ;Check if first char in reversed string is a comma.
+		FrameRate := SubStr(FrameRate, 1, -1) ;Remove comma if last char is such.
+	}
+	
+	FrameRate := StrReplace(FrameRate, " -vf", "")
+	FrameRate := StrReplace(FrameRate, " ", ",")	
+	EncodeReversibleFilterVal := " " . CustomEncodeFilterVal
+	;msgbox, wao2 %FrameRate%
+	Return	
+}
+
+
+if (EnableCustomEncodeWindowVar = 1) && (ForceRes = 0) && (ForceRate = 1) && (IsOtherOptionsOn = 1) {
+	;Made this bug fix cus FFmpeg doesn't like trailing commas in filter options.
+	NewString := FrameRate
+	ReverseString := DllCall( "msvcrt.dll\_strrev", Str, NewString, UInt,0, Str) ;Reverses string cus idk how to use SubStr backwards.
+	CheckComma := SubStr(ReverseString, 1, 1) ;Crop string down to first char.
+	if (CheckComma = ",") { ;Check if first char in reversed string is a comma.
+		FrameRate := SubStr(FrameRate, 1, -1) ;Remove comma if last char is such.
+	}
+	
+	FrameRate := StrReplace(FrameRate, " -vf", "")
+	FrameRate := StrReplace(FrameRate, " ", ",")	
+	EncodeReversibleFilterVal := " " . CustomEncodeFilterVal
+	;msgbox, wao8888 %ResolutionVar%
+	Return	
+}
+
+
+
+if (IsOtherOptionsOn = 0) && (ForceRate = 0) && (ForceRes = 1) {
+	;EncodeReversibleFilterVal := ""
+	;EnableCustomEncodeWindowVar := ""
+	;ResolutionVar := ""
+	;msgbox, urgayest %TempResolutionVar%
+	Return
+}
+
+;If Extra Options is disabled, clear the var.
+if (IsOtherOptionsOn = 0) && (ForceRate = 1) && (ForceRes = 0) {
+	EncodeReversibleFilterVal := ""
+	GuiControl,,EnableCustomEncodeWindowVar,0
+	EnableCustomEncodeWindowVar := ""
+	ResolutionVar := ""
+	;msgbox, MEMES
+	Return
+}
+
+
+
+;Custom Decode Filter Shit Should Be Here!!!
+;Havent Added yet, coming soon!!!
+if (EnableCustomDecodeWindowVar = 1) && (ForceRes = 0) {
+	DecodeReversibleFilterVal := " " . CustomDecodeFilterVal
+	msgbox, kms3
+}
+
+if (EnableCustomDecodeWindowVar = 1) && (ForceRes = 1) {
+	TempResolutionVar := ",scale=" . StrReplace(TempResolutionVar, "x", ":")		
+	DecodeReversibleFilterVal := " " . CustomDecodeFilterVal . TempResolutionVar
+	msgbox, shiet %TempResolutionVar%
+}
+Return
+
+
 
 PreMEncoderCompression:
 if (SourceFile = "") && (WebcamCompression = 0) {
 	msgbox, uhhh you didn't select a video source???
+	Return
 }
 
 if (IsBatchInput = 0) {
@@ -1063,6 +1256,7 @@ gosub, EnableForceRate
 gosub, EnableForceRes
 gosub, GetFilters
 gosub, GetFilterOptionsAndFixStrings
+;gosub, CustomFiltersOptions ;Havent made this for MEncoder yet.
 ;gosub, OutputLocation
 
 
@@ -1091,7 +1285,7 @@ if (isBatchFilename = 1) { ; This is where the Batch output stuff happens.
 
 
 MECommand := cmd.exe /k "mencoder " . MEncoderOptions . " " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config
-  msgbox, %MECommand% ;Used for checking of the command syntax is correct.
+  ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
 MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
@@ -1196,6 +1390,7 @@ GuiControl, 1:Enable, TomatoFrameCount
 GuiControl, 1:Enable, TomatoFramePosition
 GuiControl, 1:Enable, TomatoMOSHIT
 AllowChexr := 1
+EncodeReversibleFilterVal := "" ;Clear the var to avoid bugs becuase I'm dumb and losing track of what I'm doing.
 Return
 
 CustomAMVCompression:
@@ -1301,6 +1496,7 @@ Return
 PreFFmpegCompression:
 if (SourceFile = "") && (WebcamCompression = 0) {
 	msgbox, uhhh you didn't select a video source???
+	Return
 }
 
 if (IsBatchInput = 0) {
@@ -1317,6 +1513,12 @@ Return
 ;wao now we got all the FFmpeg codecs too lol
 FFmpegCompression:
 Gui, Submit, Nohide
+
+
+;Set the Frei0r System Environment Variable value so FFmpeg can find it!
+Frei0rDir := A_ScriptDir . "\FREI0R-FILTERS"
+EnvSet, FREI0R_PATH, %Frei0rDir%
+
 
 FFOutputFolder := "FFmpeg-Output\" . FFmpegCodecs
 FileCreateDir, %FFOutputFolder%
@@ -1343,6 +1545,7 @@ gosub, VideoQualitySlider ; For some reason I had to place this here or else the
 gosub, GetFilters
 gosub, EnableForceRate
 gosub, GetFilterOptionsAndFixStrings
+gosub, CustomFiltersOptions
 gosub, OutputLocation
 
 
@@ -1354,13 +1557,15 @@ if (isBatchFilename = 1) {
 }
 
 if (ForcedBake = 1) {
-SourceFile := InputFolder . "\Moshed\" . BakedFilename
+	SourceFile := InputFolder . "\Moshed\" . BakedFilename
 }
-	
+
+sleep, 10
 FFCommand := ComSpec . " /k " . " ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " " . OutputFilename . " -y"
-  MsgBox, %FFCommand%
+  ;MsgBox, %FFCommand%
 
   ;Execute FFmpeg Here, also reads Standard Error Output.
+;runwait, %FFCommand%
 FFoutput := ComObjCreate("WScript.Shell").Exec(FFCommand).StdErr.ReadAll()
 
 ;This trims all the extra bullshit the FFmpeg devs didnt omit from Standard Error Output(STDERR).
@@ -1418,6 +1623,7 @@ GuiControl, 1:Enable, TomatoFrameCount
 GuiControl, 1:Enable, TomatoFramePosition
 GuiControl, 1:Enable, TomatoMOSHIT
 AllowChexr := 1
+EncodeReversibleFilterVal := "" ;Clear the var to avoid bugs becuase I'm dumb and losing track of what I'm doing.
 Return
 
 
@@ -1644,7 +1850,7 @@ if (MencoderCodecs = "smv2.dll") {
 }
 
 if (MencoderCodecs = "smv2vfw.dll") {
-
+	
 	CustomCodecFix := "-vc smv2vfw"
 	;Forces the custom decoder I added to the codecs.config
 	;remove this whole if statement if you want to confuse mplayer and use the incorrect decoder for some spicy glitches.
@@ -1942,6 +2148,7 @@ Loop,%A_ScriptDir%\Batch-Output\*.avi
 }
 Return
 
+;Error Testing Here ATM
 ReCompressMoshedOutput:
 if (ItsANewSource = 1 ) && (ChexrWasUsed = 0) {
 	SourceFile := OutputFolder . "\output-moshed.avi"
@@ -2097,7 +2304,7 @@ if (ForcedBake = 1) {
 	inputFile := InputFolder . "\output.avi "
 	
 }
-	
+
 YUVBake := "mplayer " . CustomCodecFix . " -sws 4 " . DecodeReversibleFilterVal . " " . " -vo yuv4mpeg " . inputFile
 ;msgbox, %YUVBake%
 
