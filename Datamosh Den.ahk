@@ -136,14 +136,40 @@ ChexrWasUsed := 0
 ForcedBake := 0
 NoGetDiffPls := 0
 NewOptions := 1
+WinName := "Use This Codec Window Pls <3" ;The Hidden Child Windows name.
 
+;Gui Window Names.
 Gui Show, w485 h363, Datamosh Den - Ver 1.8.8 (Beta)
+Gui Child:Show, w170 h120 x13 y205, %WinName%
+Gui Child: -sysmenu
+
+;Set Main window as parent and hide child window used to highlight FFmpeg Section.
+DllCall("SetParent", UInt, WinExist(WinName) , UInt, WinExist("Datamosh Den"))
+ControlGet, childWin, Hwnd,,%WinName%
+;msgbox, If You Comment out the "Gui Child:Hide" And Place This messgage box here, it'll force the hidden child window out of hiding lol.
+Gui Child:Hide
 
 #Include config\GetFFmpeg.ahk ;Check if FFmpeg and newer MEncoder package is in folder, if so extract it.
 #Include config\GetDifference.ahk ;Get the duration difference between the moshed and original video.
 #Include config\UseChexr.ahk ;Hex edit the AVI to force compression artifacts.
 Return
 
+HighlightFFmpegWindow:
+Gui, Hide
+sleep, 300
+Gui Child:Show
+
+Loop 8 {
+	DllCall( "FlashWindow", UInt,childWin, Int,True )
+	Sleep 100
+}
+DllCall( "FlashWindow", UInt,childWin, Int,False )
+
+Gui Child:Hide
+sleep, 800
+Gui, Show
+GuiControl,,EnableFFmpegCodec,1 ;This Wont work in this label for some reason. So You have to click FFmpeg Codecs Radio Button Manually for now.
+Return
 
 
 EnableOtherOptions:
@@ -392,11 +418,13 @@ Gui, Submit, NoHide
 
 if (RecompressVar = "MEncoder") && (EnableCustomEncodeWindowVar = 1) && RegExMatch(CustomEncodeFilterVal,"(-lavfi )") {
 	msgbox, Looks like you're using an FFmpeg Filter :o`nMake sure FFMpeg Options/Codecs is selected if using the -lavfi flag!!!
+	gosub, HighlightFFmpegWindow
 	Return
 }
 
 if (RecompressVar = "MEncoder") && (EnableCustomEncodeWindowVar = 1) && RegExMatch(CustomEncodeFilterVal,"( frei0r)") {
 	msgbox, Looks like you're using an Frei0r Filter :o`nPlease use FFmpeg Options/Codecs for this only.`n`nFor now.
+	gosub, HighlightFFmpegWindow
 	Return
 }
 
@@ -589,6 +617,9 @@ if (EncHue = 1) {
 }
 Return
 
+F8::
+msgbox, wot
+return
 
 HueColorSlider:
 tooltip % "Hue: " . HueValue
