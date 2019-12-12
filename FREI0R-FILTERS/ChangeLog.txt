@@ -1,0 +1,66 @@
+*** See also the Changes @section in include/frei0r.h or git log
+
+1.6.1 - 25 May 2017
+
+	Minor fixes to the build system. Version correctly updated.
+
+1.6.0 - 24 March 2017
+
+	This release contains new filters and some bugfixes to parameters
+	and building environment, documentation is updated accordingly.
+	New filters (3): bgsubtract0r, glitch0r, rgbsplit0r
+	Updated (2): Distort0r now mode and velocity, Curves has improved
+	precision.
+
+1.5.0 - 2 April 2016
+
+	This release fixes several major bugs in existing plugins and adds
+	one new filter: NDVI (Normalized Difference Vegetation Index).
+
+1.4.0 - 24 February 2013
+
+	This release fixes several major bugs in existing plugins,
+	adds new filters and the optional dependency to cairo.
+	New filters (18): IIRblur, Vignette, Keyspillm0pup, Timeout,
+	  Posterize, Dither, Spillsupress, Emboss, Colgate, RGBNoise,
+	  Colorize, Softglow, ColrHalftone, Sigmoidaltransfer,
+	  Colortap, cairogradient, cairoimagegrid, medians
+	New mixers: cairoblend, cairoaffineblend
+
+1.3.0 - 8 March 2011
+
+	This release adds more plugins, better documentation and better
+	examples for writing code that makes use of thed opencv library.
+	New filters (4): tutorial, sharpness, denoise, lightgraffiti
+	New generator: test_pat (broadcast test patterns)
+	New mixer: addition_alpha
+
+1.2.1 - 4 October 2010
+
+	This is a bugfix release which avoids a crash on load of the
+	Vertigo plugin and corrects the install path according do
+	distribution needs.
+
+1.2.0 - 13 September 2010
+
+	This release adds many new filters, cross-platform compatibility
+	to build Win32 plugins, some fixes to the specification, a new Web
+	page, and more documentation.
+
+1.1.22 - 28 October 2008
+
+	Three new plugins were added: UV Map, Edge Glow, and K-Means
+	Clustering. Various bugfixes were done.
+
+1.1.21 - 1 April 2008
+
+	This release adds six new plugins: Lenscorrection, Transparency,
+	Color Distance, Perspective, RGB Parade, and Vector Scope.
+
+1.1.20 - 7 November 2007
+
+	This is the first release as a standard autoconf tarball. It
+	contains various bugfixes and some new plugins.
+
+
+*** At last, see also git --log from repository

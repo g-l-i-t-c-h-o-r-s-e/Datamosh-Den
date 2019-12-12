@@ -1,0 +1,34 @@
+
+Project initiated at the Piksel Festival in 2004
+hosted by BEK - Bergen Senter for Elektronisk Kunst
+
+Developers who contributed, in alphabetic order:
+
+Akito Iwakura
+Albert Frisch
+Brian Matherly
+Burkhard Plaum
+Carlo E. Prelz
+Dan Dennedy
+Denis Jaromil Roio
+Filippo Giunchedi
+Gabriel Finch
+Georg Seidel
+Hedde Bosman
+IOhannes M. Zmölnig
+Janne Liljeblad
+Jean-Sebastien Senecal
+Joshua M. Doe
+Luca Bigliardi
+Maksim Golovkin (Максим Головкин)
+Marko Cebokli
+Martin Bayer
+Mathieu Guindon
+Phillip Promesberger
+Richard Spindler
+Samuel Mimram
+Simon A. Eugster
+Stefano Sabatini
+Steinar H. Gunderson
+Till Theato
+
