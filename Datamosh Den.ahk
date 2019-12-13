@@ -1593,7 +1593,7 @@ if (ForcedBake = 1) {
 if (ResolutionVar = NewResVar) {
 	ResolutionVar := "" ;Clear this annoying bug I cant hunt down yet.
 }
-	
+
 sleep, 10
 FFCommand := ComSpec . " /k " . " ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " " . OutputFilename . " -y"
 MsgBox, %FFCommand%
@@ -1626,6 +1626,15 @@ if FileExist(CheckFile) {
 }
 
 
+IF RegExMatch(FFoutput,"(Could not find module )") && RegExMatch(FFoutput,"(Parsed_frei0r)") {
+	msgbox, You probably used the wrong Frei0r filter name.`n`n`n%FFoutput%
+	Return
+}
+
+IF RegExMatch(FFoutput,"(Error initializing complex filters)") or RegExMatch(FFoutput,"(Invalid argument)") {
+	msgbox, You either used the wrong filter or filter settings.`n`n`n%FFoutput%
+	Return
+}
 
 IF RegExMatch(FFoutput,"(The specified picture size)") or RegExMatch(FFoutput,"(maybe incorrect parameters)") {
 	msgbox, oshit an error, my first guess is video resolution is probably wrong.`n%FFoutput%
