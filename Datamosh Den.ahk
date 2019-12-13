@@ -1021,7 +1021,7 @@ if (GlobalResolutionVar = 1) && (IsOtherOptionsOn = 0) else if (EnableForceRate 
 			;msgbox, %EncodeReversibleFilterVal%
 			;msgbox, %DecodeReversibleFilterVal%
 
-if (UseOtherOptions = 0) { ;Remove the extra options/Reversible filters, if disabled.
+if (UseOtherOptions = 0) { ;Remove the extra options/Reversible filters, if disabled. HERE
 	EncodeReversibleFilterVal := ""
 	DecodeReversibleFilterVal := ""
 	vfFlag := ""
@@ -1090,7 +1090,7 @@ if (ForceRes = 0) && (ForceRate = 0) && (IsOtherOptionsOn = 0) && (RecompressVar
 }
 
 if (ForceRate = 1) && (ForceRes = 1) && (IsOtherOptionsOn = 0) && (RecompressVar = "MEncoder") {
-	EncodeReversibleFilterVal := ""	
+	EncodeReversibleFilterVal := ""
 }
 
 
@@ -1125,6 +1125,7 @@ if (ForceRate = 1) && (ForceRes = 0) && (IsOtherOptionsOn = 1) && (RecompressVar
 	CheckComma := SubStr(ReverseString, 1, 1) ;Crop string down to first char.
 	if (CheckComma = ",") { ;Check if first char in reversed string is a comma.
 		FrameRate := SubStr(FrameRate, 1, -1) ;Remove comma if last char is such.
+		FrameRate := StrReplace(FrameRate, "`n", "") ;Removes linebreak and shit.
 	}
 	
 }
@@ -1136,6 +1137,7 @@ if (ForceRate = 0) && (ForceRes = 1) && (IsOtherOptionsOn = 1) && (RecompressVar
 	CheckComma := SubStr(ReverseString, 1, 1) ;Crop string down to first char.
 	if (CheckComma = ",") { ;Check if first char in reversed string is a comma.
 		EncodeReversibleFilterVal := SubStr(EncodeReversibleFilterVal, 1, -1) ;Remove comma if last char is such.
+		EncodeReversibleFilterVal := StrReplace(EncodeReversibleFilterVal, "`n", "") ;Removes linebreak and shit.
 	}
 }
 
@@ -1150,13 +1152,16 @@ if (ForceRate = 0) && (ForceRes = 0) && (IsOtherOptionsOn = 0) && (RecompressVar
 if (ForceRate = 1) && (ForceRes = 0) && (IsOtherOptionsOn = 0) && (RecompressVar = "MEncoder") {
 	ResolutionVar := "" ;Clear unused res var
 }
-Return
 
 
-CustomFiltersOptions:
-;Custom Encode Filter Shit Should Be Here!!!
+
+
+
+
+;Custom Encode Filter Shit Here Now.
 if (EnableCustomEncodeWindowVar = 1) && (ForceRes = 0) && (ForceRate = 0) && (IsOtherOptionsOn = 1) {
 	EncodeReversibleFilterVal := " " . CustomEncodeFilterVal
+	EncodeReversibleFilterVal := StrReplace(EncodeReversibleFilterVal, "`n", "") ;Removes linebreak and shit.
 	;msgbox, why
 	Return
 }
@@ -1164,6 +1169,7 @@ if (EnableCustomEncodeWindowVar = 1) && (ForceRes = 0) && (ForceRate = 0) && (Is
 if (EnableCustomEncodeWindowVar = 1) && (ForceRes = 1) && (ForceRate = 0) && (IsOtherOptionsOn = 1) {
 	TempResolutionVar := ",scale=" . StrReplace(TempResolutionVar, "x", ":")		
 	EncodeReversibleFilterVal := " " . CustomEncodeFilterVal . TempResolutionVar
+	EncodeReversibleFilterVal := StrReplace(EncodeReversibleFilterVal, "`n", "") ;Removes linebreak and shit.
 	;msgbox, wao1
 	Return
 }
@@ -1180,6 +1186,7 @@ if (EnableCustomEncodeWindowVar = 1) && (ForceRes = 1) && (ForceRate = 1) && (Is
 	FrameRate := StrReplace(FrameRate, " -vf", "")
 	FrameRate := StrReplace(FrameRate, " ", ",")	
 	EncodeReversibleFilterVal := " " . CustomEncodeFilterVal
+	EncodeReversibleFilterVal := StrReplace(EncodeReversibleFilterVal, "`n", "") ;Removes linebreak and shit.
 	;msgbox, wao2 %FrameRate%
 	Return	
 }
@@ -1197,6 +1204,7 @@ if (EnableCustomEncodeWindowVar = 1) && (ForceRes = 0) && (ForceRate = 1) && (Is
 	FrameRate := StrReplace(FrameRate, " -vf", "")
 	FrameRate := StrReplace(FrameRate, " ", ",")	
 	EncodeReversibleFilterVal := " " . CustomEncodeFilterVal
+	EncodeReversibleFilterVal := StrReplace(EncodeReversibleFilterVal, "`n", "") ;Removes linebreak and shit.
 	;msgbox, wao8888 %ResolutionVar%
 	Return	
 }
@@ -1217,26 +1225,11 @@ if (IsOtherOptionsOn = 0) && (ForceRate = 1) && (ForceRes = 0) {
 	GuiControl,,EnableCustomEncodeWindowVar,0
 	EnableCustomEncodeWindowVar := ""
 	ResolutionVar := ""
+	EncodeReversibleFilterVal := StrReplace(EncodeReversibleFilterVal, "`n", "") ;Removes linebreak and shit.
 	;msgbox, MEMES
 	Return
 }
-
-
-
-;Custom Decode Filter Shit Should Be Here!!!
-;Havent Added yet, coming soon!!!
-if (EnableCustomDecodeWindowVar = 1) && (ForceRes = 0) {
-	DecodeReversibleFilterVal := " " . CustomDecodeFilterVal
-	msgbox, kms3
-}
-
-if (EnableCustomDecodeWindowVar = 1) && (ForceRes = 1) {
-	TempResolutionVar := ",scale=" . StrReplace(TempResolutionVar, "x", ":")		
-	DecodeReversibleFilterVal := " " . CustomDecodeFilterVal . TempResolutionVar
-	msgbox, shiet %TempResolutionVar%
-}
 Return
-
 
 
 PreMEncoderCompression:
@@ -1576,7 +1569,6 @@ gosub, VideoQualitySlider ; For some reason I had to place this here or else the
 gosub, GetFilters
 gosub, EnableForceRate
 gosub, GetFilterOptionsAndFixStrings
-gosub, CustomFiltersOptions
 gosub, OutputLocation
 
 
