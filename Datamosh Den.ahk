@@ -239,7 +239,7 @@ Gui Add, Text, x136 y2 w120 h23 +0x200 +0x2, Decoding Filters:
 Gui Font
 Gui Add, CheckBox, x12 y103 w60 h23 vEncRev gDisableCustomFilters, Reverse
 Gui Add, CheckBox, x196 y103 w60 h23 +0x220 vDecRev gDisableCustomFilters, Reverse
-Gui Add, CheckBox, x12 y153 w42 h23 vEncHue gEnableHueSlider gDisableCustomFilters, Hue
+Gui Add, CheckBox, x12 y153 w42 h23 vEncHue gEnableHueSlider, Hue
 Gui Add, CheckBox, x215 y153 w41 h23 +0x220 vDecHue gDisableCustomFilters, Hue
 Gui Add, CheckBox, x12 y128 w60 h23 vEncInv gDisableCustomFilters, Invert
 Gui Add, CheckBox, x196 y128 w60 h23 +0x220 vDecInv gDisableCustomFilters, Invert
@@ -594,6 +594,7 @@ if (CheckComma = ",") { ;Check if first char in string is a comma.
 Return
 
 EnableHueSlider:
+gosub, DisableCustomFilters
 GuiControlGet, EncHue
 if (EncHue = 0) {
 	Return
@@ -1105,11 +1106,12 @@ if (ForceRes = 1) && (IsOtherOptionsOn = 1) {
 	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
 }
 
-if (ForceRes = 1) && (IsOtherOptionsOn = 0) {
+;HERE
+;if (ForceRes = 1) && (IsOtherOptionsOn = 0) {
 	;EncodeReversibleFilterVal := ""	
-	TempResolutionVar := ResolutionVar ;Allocate the string in the ResolutionVar variable before clearing, so we can use it in the Custom Encode and Decode Filters.
-	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
-}
+;	TempResolutionVar := ResolutionVar ;Allocate the string in the ResolutionVar variable before clearing, so we can use it in the Custom Encode and Decode Filters.
+;	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
+;}
 
 
 
@@ -1276,9 +1278,9 @@ if (MencoderCodecs = "vp31vfw.dll") {
 
 gosub, WebCamCompression
 gosub, EnableReverseVideo
-gosub, EnableForceRate
 gosub, EnableForceRes
 gosub, GetFilters
+gosub, EnableForceRate
 gosub, GetFilterOptionsAndFixStrings
 ;gosub, CustomFiltersOptions ;Havent made this for MEncoder yet.
 ;gosub, OutputLocation
@@ -1290,9 +1292,9 @@ if (UseOtherOptions = 0) { ;Remove the extra options/Reversible filters, if disa
 	vfFlag := ""
 }
 
-if (ForceRes = 1) && if (UseOtherOptions = 1) {
-	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
-}
+;if (ForceRes = 1) && if (UseOtherOptions = 1) {
+;	ResolutionVar := "" ;Reset the Forced Resolution Variable, because its being used in the Reversible filter variable instead.
+;}
 
 if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll") else if (MencoderCodecs = "Amv3Codec.dll") {
 	gosub, CustomAMVCompression ;Remove Watermark.
@@ -1308,7 +1310,7 @@ if (isBatchFilename = 1) { ; This is where the Batch output stuff happens.
 
 
 
-MECommand := cmd.exe /k "mencoder " . MEncoderOptions . " " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config
+MECommand := ComSpec . " /c " . " mencoder " . MEncoderOptions . " " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config
   ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
@@ -1853,16 +1855,18 @@ return
 
 CustomCodecShit:
 GuiControlGet, MencoderCodecs
+Gui, Submit, NoHide
 CustomCodecFix := ""
-LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
+
+gosub, OutputLocation
 
 if (MencoderCodecs = "x265vfw.dll") {
 	
 	CustomCodecFix := ""
-	LemmeSeeIt := "cmd.exe /c new-mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
-	PNGBake := "new-mplayer " . CustomCodecFix . " output-moshed.avi -vo png:outdir=FRAMES -cache 1024"
-	MP4Bake := "new-mencoder " . CustomCodecFix . " output-moshed.avi -ovc x264 -x264encopts crf=1.0 " . MEncoderOptions " -o ImBaked.mp4 -of lavf"
-	YUVBake := "new-mplayer " . CustomCodecFix . " -vo yuv4mpeg output-moshed.avi"	
+	LemmeSeeIt := "cmd.exe /c new-mplayer " . CustomCodecFix . " " . OutputFolder . "\output-moshed.avi -loop 0"
+	PNGBake := "new-mplayer " . CustomCodecFix . " " . OutputFolder . "\output-moshed.avi -vo png:outdir=FRAMES -cache 1024"
+	MP4Bake := "new-mencoder " . CustomCodecFix . " " . OutputFolder . "\output-moshed.avi -ovc x264 -x264encopts crf=1.0 " . MEncoderOptions " -o " . OutputFolder . "\ImBaked.mp4 -of lavf"
+	YUVBake := "new-mplayer " . CustomCodecFix . " -vo yuv4mpeg " . OutputFolder "\output-moshed.avi"
 }
 
 
@@ -1880,7 +1884,7 @@ if (MencoderCodecs = "smv2vfw.dll") {
 }
 
 ;Removes the watermark burnt into the video by AMV2
-if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll") else if (MencoderCodecs = "Amv3Codec.dll") {
+if (MencoderCodecs = "Amv2Codec.dll") or (MencoderCodecs = "Amv2mtCodec.dll") or (MencoderCodecs = "Amv3Codec.dll") {
 	;msgbox, Using Custom AMV2 Watermark Removal.
     ;Crops out the isolated watermark
 	AMV2RemoveWatermark1 := " -sws 4 -vf crop=640:300:0:60,scale=640:360"
@@ -1890,15 +1894,15 @@ if (MencoderCodecs = "Amv2Codec.dll") else if (MencoderCodecs = "Amv2mtCodec.dll
 	
 	if (Sel = 1) {
 		CustomCodecFix := AMV2RemoveWatermark1
-		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
+		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " " . OutputFolder . "\output-moshed.avi -loop 0"
 	}
 	if (sel = 2) {
 		CustomCodecFix := AMV2RemoveWatermark2
-		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0"
+		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " " . OutputFolder . " output-moshed.avi -loop 0"
 	}
 	if (sel = 3) {
 		CustomCodecFix := AMV2RemoveWatermark3
-		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " output-moshed.avi -loop 0 -fs"
+		LemmeSeeIt := "cmd.exe /c mplayer " . CustomCodecFix . " " . OutputFolder . " output-moshed.avi -loop 0 -fs"
 	}
 	
 	Return
@@ -1914,7 +1918,7 @@ if (WeGotPython = 1) {
 }
 
 regread, python, HKLM, SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\python.exe
-if (python = "") else if !RegExMatch(python,"(Python27)")  {
+if (python = "") or !RegExMatch(python,"(Python27)")  {
 	msgbox, Enter your Python27 Path/Folder.`n`nIts usually like "C:\Python27"
 	Gui, 10:Color, DDCEE9	
 	Gui 10:Add, Edit, x0 y8 w120 h21 vCustomPythonPath,
@@ -1999,6 +2003,7 @@ Return
 
 
 OutputLocation:
+Gui, Submit, NoHide
 if (RecompressVar = "FFmpeg") && (ForcedBake = 0) {
 	InputFolder := RecompressVar . "-Output\" . FFmpegCodecs
 	OutputFolder := RecompressVar . "-Output\" . FFmpegCodecs . "\Moshed"
@@ -2044,14 +2049,14 @@ CommenceTomatoDatamosh:
 ;Destroy AVI Index via Tomato for Datamoshed Goodness!!!
 Gui, Submit, Nohide
 
+LemmeSeeIt := ComSpec . " /c " . "mplayer " . CustomCodecFix . " " . OutputFolder . "\output-moshed.avi -loop 0" ;Default.
+
 gosub, CustomCodecShit
 gosub, TestPython
 gosub, OutputLocation
 NoGetDiffPls := 0
 ForcedBake := 0
 ChexrWasUsed := 0 ;If you use Datamosh It immediately after using chexr, this will reset this var and use "output-moshed.avi" instead of "output.avi".
-
-LemmeSeeIt := "mplayer " . CustomCodecFix . " " . OutputFolder . "\output-moshed.avi -loop 0"
 
 ;Remove the datamoshed avi if it existms before using Tomato to Datamosh, to avoid file conflicts.
 CheckMe := OutputFolder . "\output-moshed.avi"
@@ -2063,7 +2068,7 @@ RunTomato := ComSpec . " /c " . python . " tomato.py -i " . InputFolder . "/outp
 ;msgbox, %RunTomato%
 ;runwait, %ComSpec% /k %python% tomato.py -i %InputFolder%/output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed.avi
 runwait, %RunTomato%
-runwait, %ComSpec% /c %LemmeSeeIt%
+runwait, %LemmeSeeIt%
 ;open custom baking menu afterwards
 BakeGUI()
 
@@ -2268,11 +2273,16 @@ PlsBakeMP4:
 Gui, 3:Destroy
 FileDelete, ImBaked.mp4
 
-gosub, CustomCodecShit ;Temporary fix for HEVC/H265 decoding.
 gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
 
 BakedFilename := "ImBaked.mp4"
 inputFile := OutputFolder . "\output-moshed.avi "
+
+gosub, CustomCodecShit
+MP4Bake := ComSpec . " /c " . "mencoder " . CustomCodecFix . " " . inputFile . " -sws 4 " . DecodeReversibleFilterVal . MP4BakeOptions " -o " . OutputFolder . BakedOutputFolder . "\" . BakedFilename . " -of lavf" ;Default
+gosub, CustomCodecShit ;Temporary fix for HEVC/H265 decoding.
+
+
 if (BatchBake = 1) {
 	inputFile := " " . ConcatString . " "
 	BakedOutputFolder := OutputFolder
@@ -2288,7 +2298,6 @@ if RegExMatch(DecodeReversibleFilterVal,"(-vf hue=:)") {
 	DecodeReversibleFilterVal := "" ;clear the var, Temporary bug fix.
 }
 
-MP4Bake := ComSpec . " /c " "mencoder " . CustomCodecFix . " " . inputFile . " -sws 4 " . DecodeReversibleFilterVal . MP4BakeOptions " -o " . OutputFolder . BakedOutputFolder . "\" . BakedFilename . " -of lavf"
 ;msgbox, %MP4Bake%
 
 runwait, %MP4Bake%
@@ -2313,11 +2322,13 @@ PlsBakeYUV:
 Gui, 3:Destroy
 FileDelete, %OutputFolder%\ImBaked.yuv
 
+gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
+inputFile := OutputFolder . "\output-moshed.avi "
+YUVBake := "mplayer " . CustomCodecFix . " -sws 4 " . DecodeReversibleFilterVal . " " . " -vo yuv4mpeg " . inputFile
+
 ;Temporary fix for HEVC/H265 decoding.
 gosub, CustomCodecShit
-gosub, OutputLocation ;Get the foldername the Datamoshed avi is in.
 
-inputFile := OutputFolder . "\output-moshed.avi "
 if (BatchBake = 1) {
 	inputFile := " " . ConcatString . " "
 	OutputFolder := ""
@@ -2328,7 +2339,6 @@ if (ForcedBake = 1) {
 	
 }
 
-YUVBake := "mplayer " . CustomCodecFix . " -sws 4 " . DecodeReversibleFilterVal . " " . " -vo yuv4mpeg " . inputFile
 ;msgbox, %YUVBake%
 
 runwait, %YUVBake%
