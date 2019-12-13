@@ -928,6 +928,8 @@ EnableForceRes:
 Gui, Submit, NoHide
 GuiControlGet, ForceRes
 
+NewResVar := ResolutionVar
+
 if (ForceRes = 1) && (RecompressVar = "FFmpeg") {
 	GuiControl, 1:Enable, ResolutionVar
 	ResolutionVar := " -vf scale=" . ResolutionVar
@@ -1308,10 +1310,13 @@ if (isBatchFilename = 1) { ; This is where the Batch output stuff happens.
 	OutputFilename := "./Batch-Output/output_" . zeropad . ".avi"	
 }
 
+if (ResolutionVar = NewResVar) {
+	ResolutionVar := "" ;Clear this annoying bug I cant hunt down yet.
+}
 
 
 MECommand := ComSpec . " /c " . " mencoder " . MEncoderOptions . " " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config
-  ;msgbox, %MECommand% ;Used for checking of the command syntax is correct.
+  msgbox, %MECommand% ;Used for checking of the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
 MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
@@ -1585,9 +1590,13 @@ if (ForcedBake = 1) {
 	SourceFile := InputFolder . "\Moshed\" . BakedFilename
 }
 
+if (ResolutionVar = NewResVar) {
+	ResolutionVar := "" ;Clear this annoying bug I cant hunt down yet.
+}
+	
 sleep, 10
 FFCommand := ComSpec . " /k " . " ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " " . OutputFilename . " -y"
-  ;MsgBox, %FFCommand%
+MsgBox, %FFCommand%
 
   ;Execute FFmpeg Here, also reads Standard Error Output.
 ;runwait, %FFCommand%
