@@ -42,6 +42,7 @@ pic := A_ScriptDir . "\config\Background.png"
 Gui, Add, Pic, x0 y0 w486 h363 vBack, %pic%
 ;I HAD TO MOVE THE GUI PIC BACKGROUND PLACEMENT HERE TO MAKE IT WORK!!!
 Gui Add, GroupBox, x154 y10 w314 h83 ,
+Gui Add, CheckBox,  x165 y34 w10 h12 vIsCustomFolder gCustomFolderMessage
 Gui Add, Button, x165 y34 w44 h43 gSelectSource, Source
 Gui Add, Edit, x285 y45 w63 h21 +Center vResolutionVar, 640x360
 Gui Add, Text, x291 y29 w49 h14 +0x200 +BackgroundTrans, Resolution
@@ -137,6 +138,7 @@ ForcedBake := 0
 NoGetDiffPls := 0
 NewOptions := 1
 WinName := "Use This Codec Window Pls <3" ;The Hidden Child Windows name.
+CustomFolderHelpMessage := 1
 
 ;Gui Window Names.
 Gui Show, w485 h363, Datamosh Den - Ver 1.8.8 (Beta)
@@ -148,6 +150,9 @@ DllCall("SetParent", UInt, WinExist(WinName) , UInt, WinExist("Datamosh Den"))
 ControlGet, childWin, Hwnd,,%WinName%
 ;msgbox, If You Comment out the "Gui Child:Hide" And Place This messgage box here, it'll force the hidden child window out of hiding lol.
 Gui Child:Hide
+sleep, 50
+Send, {Tab}
+
 
 #Include config\GetFFmpeg.ahk ;Check if FFmpeg and newer MEncoder package is in folder, if so extract it.
 #Include config\GetDifference.ahk ;Get the duration difference between the moshed and original video.
@@ -651,9 +656,20 @@ Return
 
 
 EnableReverseVideo:
-gosub, EnableForceRate
 gosub, EnableForceRes
 gosub, OutputLocation
+
+ReverseFilter := " -vf reverse "
+
+if (ResolutionVar = NewResVar) && (GlobalResolutionVar = 1) {
+	ResolutionVar := "" ;Clear this annoying bug I cant hunt down yet.	
+	ResolutionVar := "-s " . NewResVar
+}
+
+if (ResolutionVar = NewResVar) && (GlobalResolutionVar = 0) {
+	ResolutionVar := "" ;Clear this annoying bug I cant hunt down yet.	
+}
+
 CheckFile := InputFolder . "\output.avi"
 
 if (EncRev = 1) && (isRecompressed = 0) {
@@ -681,14 +697,14 @@ if (EncRev = 0) && (isRecompressed = 1) && (WebcamCompression = 1) {
 
 if (EncRev = 1) {
 	if FileExist(CheckFile) && (ReverseOnce = 1) && (isRecompressed = 0) {
-		;msgbox, wao its off???
 		sourceFileRev := DefaultSourceFile
 		
 		if (ReverseWebcam = 1) {
 			sourceFileRev := InputFolder . "\webcam-output.avi"
 		}
 		
-		FFReverseCompress := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . sourceFileRev . chr(0x22) . " " . ResolutionVar . FrameRate . " -f avi -c:v huffyuv -vf reverse " . InputFolder . "\output2.avi -y"
+		FFReverseCompress := ComSpec . " /c " . " ffmpeg -i " . chr(0x22) . sourceFileRev . chr(0x22) . " " . ResolutionVar . " " . " -f avi -c:v huffyuv " . ReverseFilter . " " . InputFolder . "\output2.avi -y"
+
 		
 		runwait, %FFReverseCompress%	
 		SourceFile := InputFolder . "\output2.avi"
@@ -765,6 +781,17 @@ if (IsBatchInput = 0) && if (BatchInputHelpMsg = 1) {
 }
 Return
 
+CustomFolderMessage:
+Gui, Submit, NoHide
+if (IsCustomFolder = 1) && (CustomFolderHelpMessage = 1) {
+	msgbox, I see you found this option, with this on all your output files are made in the same folder as the input folder.
+}
+
+if (IsCustomFolder = 0) && (CustomFolderHelpMessage = 1) {
+	msgbox, You deactivated the custom output folder function,`nit will still work if you check this box again.`n`nThis message will no longer pop up, however.
+	CustomFolderHelpMessage := 0 ;Turns off the help box until next startup.
+}
+Return
 
 VideoQualitySlider:
 ;Gui,Submit,NoHide
@@ -829,14 +856,23 @@ Return
 
 WebCamCompression:
 ;Gui, Submit, NoHide
-gosub, EnableForceRate
-gosub, EnableForceRes
 gosub, OutputLocation
+gosub, EnableForceRes
+
+if (ResolutionVar = NewResVar) && (GlobalResolutionVar = 1) {
+	ResolutionVar := "" ;Clear this annoying bug I cant hunt down yet.	
+	ResolutionVar := "-s " . NewResVar
+}
+
+if (ResolutionVar = NewResVar) && (GlobalResolutionVar = 0) {
+	ResolutionVar := "" ;Clear this annoying bug I cant hunt down yet.	
+}
+
 
 if (WebcamCompression = 1) {
-	FFWebcamCompress := ComSpec . " /c " . " ffmpeg " . InputFrameRate . WebCam . ResolutionVar . FrameRate . " -f avi -c:v huffyuv " . InputFolder . "\webcam-output.avi -y"
+	FFWebcamCompress := ComSpec . " /c " . " ffmpeg " . InputFrameRate . WebCam . ResolutionVar . " -f avi -c:v huffyuv " . InputFolder . "\webcam-output.avi -y"
 	
-	runwait, %FFWebcamCompress%	
+	runwait, %FFWebcamCompress%
 	SourceFile := InputFolder . "\webcam-output.avi"
 	WebcamCompression := "0"
 	return
@@ -930,13 +966,13 @@ GuiControlGet, ForceRes
 
 NewResVar := ResolutionVar
 
-if (ForceRes = 1) && (RecompressVar = "FFmpeg") {
+if (ForceRes = 1) && (ForceRate = 0) && (RecompressVar = "FFmpeg") {
 	GuiControl, 1:Enable, ResolutionVar
 	ResolutionVar := " -vf scale=" . ResolutionVar
-	global GlobalResolutionVar := 1	
+	global GlobalResolutionVar := 1
 }
 
-if (ForceRes = 1) && (RecompressVar = "MEncoder") {
+if (ForceRes = 1) && (ForceRate = 0) && (RecompressVar = "MEncoder") {
 	GuiControl, 1:Enable, ResolutionVar
 	ResolutionVar := " -vf scale=" . ResolutionVar
 	ResolutionVar := StrReplace(ResolutionVar, "x", ":")
@@ -1134,7 +1170,8 @@ if (ForceRate = 1) && (ForceRes = 0) && (IsOtherOptionsOn = 1) && (RecompressVar
 	
 }
 
-if (ForceRate = 0) && (ForceRes = 1) && (IsOtherOptionsOn = 1) && (RecompressVar = "FFmpeg") {
+;ayy
+if (ForceRate = 0) && (ForceRes = 1) && (IsOtherOptionsOn = 1) && (RecompressVar = "FFmpeg") or (RecompressVar = "MEncoder") {
 	;Made this bug fix cus FFmpeg doesn't like trailing commas in filter options.
 	NewString := EncodeReversibleFilterVal
 	ReverseString := DllCall( "msvcrt.dll\_strrev", Str, NewString, UInt,0, Str) ;Reverses string cus idk how to use SubStr backwards.
@@ -1156,8 +1193,6 @@ if (ForceRate = 0) && (ForceRes = 0) && (IsOtherOptionsOn = 0) && (RecompressVar
 if (ForceRate = 1) && (ForceRes = 0) && (IsOtherOptionsOn = 0) && (RecompressVar = "MEncoder") {
 	ResolutionVar := "" ;Clear unused res var
 }
-
-
 
 
 
@@ -1316,7 +1351,7 @@ if (ResolutionVar = NewResVar) {
 
 
 MECommand := ComSpec . " /c " . " mencoder " . MEncoderOptions . " " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -of avi -o " . OutputFilename . " -ovc vfw -xvfwopts codec=" . MencoderCodecs . config
-  msgbox, %MECommand% ;Used for checking of the command syntax is correct.
+msgbox, %MECommand% ;Used for checking if the command syntax is correct.
 
   ;Execute MEncoder Here, also reads Standard Error Output.
 MEoutput := ComObjCreate("WScript.Shell").Exec(MECommand).StdErr.ReadAll()
@@ -1596,7 +1631,7 @@ if (ResolutionVar = NewResVar) {
 
 sleep, 10
 FFCommand := ComSpec . " /k " . " ffmpeg " . InputFrameRate . " -i " . chr(0x22) . SourceFile . chr(0x22) . ResolutionVar . EncodeReversibleFilterVal . FrameRate . " -f avi -strict -2 -c:v " . FFmpegCodecs . " -q:v " . VQuality . " " . FFmpegOptions . " " . OutputFilename . " -y"
-MsgBox, %FFCommand%
+MsgBox, %FFCommand% ;Used for testing if the command syntax is correct.
 
   ;Execute FFmpeg Here, also reads Standard Error Output.
 ;runwait, %FFCommand%
@@ -1605,6 +1640,7 @@ FFoutput := ComObjCreate("WScript.Shell").Exec(FFCommand).StdErr.ReadAll()
 ;This trims all the extra bullshit the FFmpeg devs didnt omit from Standard Error Output(STDERR).
 StartingPos := InStr(FFoutput, "[")
 FFoutput := SubStr(FFoutput, StartingPos + 25)
+
 
 
 ;Remove any extra avi made by the reverse video filter.
@@ -1626,11 +1662,14 @@ if FileExist(CheckFile) {
 }
 
 
+
+;If you used an incorrect Frie0r filter name, this should be triggered.
 IF RegExMatch(FFoutput,"(Could not find module )") && RegExMatch(FFoutput,"(Parsed_frei0r)") {
 	msgbox, You probably used the wrong Frei0r filter name.`n`n`n%FFoutput%
 	Return
 }
 
+;If you used incorrect filter settings, this should be triggered.
 IF RegExMatch(FFoutput,"(Error initializing complex filters)") or RegExMatch(FFoutput,"(Invalid argument)") {
 	msgbox, You either used the wrong filter or filter settings.`n`n`n%FFoutput%
 	Return
@@ -1652,6 +1691,8 @@ IF RegExMatch(FFoutput,"(Invalid data found)") {
 	msgbox, There may have been an issue decoding.`nThis message is normal however, if you hex edited the avi.
 }
 
+
+
 ;Keep Tomato disabled until a compression is achieved.
 if (NoTomato4U = 1) {
 	msgbox, Tomato is disabled still :(
@@ -1666,7 +1707,7 @@ GuiControl, 1:Enable, TomatoFrameCount
 GuiControl, 1:Enable, TomatoFramePosition
 GuiControl, 1:Enable, TomatoMOSHIT
 AllowChexr := 1
-EncodeReversibleFilterVal := "" ;Clear the var to avoid bugs becuase I'm dumb and losing track of what I'm doing.
+EncodeReversibleFilterVal := "" ;Clear the var to avoid bugs because I'm dumb and losing track of what I'm doing.
 Return
 
 
@@ -2022,29 +2063,29 @@ Return
 
 OutputLocation:
 Gui, Submit, NoHide
-if (RecompressVar = "FFmpeg") && (ForcedBake = 0) {
+if (RecompressVar = "FFmpeg") && (ForcedBake = 0) && (IsCustomFolder = 0) {
 	InputFolder := RecompressVar . "-Output\" . FFmpegCodecs
 	OutputFolder := RecompressVar . "-Output\" . FFmpegCodecs . "\Moshed"
 	FileCreateDir, %OutputFolder%
 	;msgbox, %OutputFolder%
 }
 
-if (RecompressVar = "MEncoder") {
+if (RecompressVar = "MEncoder") && (ForcedBake = 0) && (IsCustomFolder = 0) {
 	SplitPath, MencoderCodecs,,,, codecname,	
 	InputFolder := RecompressVar . "-Output\" . codecname
 	OutputFolder := RecompressVar . "-Output\" . codecname . "\Moshed"
 	FileCreateDir, %OutputFolder%
-	;msgbox, %OutputFolder%
+	;msgbox, kms
 }
 
-if (RecompressVar = "FFmpeg") && if (isBatchInput = 1) {
+if (RecompressVar = "FFmpeg") && (isBatchInput = 1) {
 	InputFolder := "Batch-Output\" . FFmpegCodecs
 	OutputFolder := "Batch-Output-Moshed\" . FFmpegCodecs
 	FileCreateDir, %OutputFolder%
 	;msgbox, %OutputFolder%
 }
 
-if (RecompressVar = "MEncoder") && if (isBatchInput = 1) {
+if (RecompressVar = "MEncoder") && (isBatchInput = 1) {
 	SplitPath, MencoderCodecs,,,, codecname,	
 	InputFolder := "Batch-Output\" . codecname
 	OutputFolder := "Batch-Output-Moshed\" . codecname
@@ -2058,6 +2099,27 @@ if (RecompressVar = "FFmpeg") && (ForcedBake = 1) {
 	InputFolder := "MEncoder-Output\" . codecname
 	OutputFolder := RecompressVar . "-Output\" . FFmpegCodecs . "\Moshed"
 	FileCreateDir, %OutputFolder%
+}
+
+
+;<3 <3 <3
+if (RecompressVar = "FFmpeg") && (ForcedBake = 0) && (IsCustomFolder = 1) {
+	SplitPath, DefaultSourceFile,,InputFileDir
+	InputFolder := InputFileDir . "\" . RecompressVar . "-Output\" . FFmpegCodecs
+	OutputFolder := InputFileDir . "\" . RecompressVar . "-Output\" . FFmpegCodecs . "\Moshed"
+	
+	FileCreateDir, %OutputFolder%
+	OutputFilename := InputFolder . "\output.avi" ;Default output filename.
+}
+
+if (RecompressVar = "MEncoder") && (IsCustomFolder = 1) {
+	SplitPath, DefaultSourceFile,,InputFileDir	
+	SplitPath, MencoderCodecs,,,, codecname,	
+	InputFolder := InputFileDir . "\" . RecompressVar . "-Output\" . codecname
+	OutputFolder := InputFileDir . "\" . RecompressVar . "-Output\" . codecname . "\Moshed"	
+	
+	FileCreateDir, %OutputFolder%
+	OutputFilename := InputFolder . "\output.avi" ;Default output filename.	
 }
 Return
 
@@ -2082,7 +2144,7 @@ if FileExist(CheckMe) {
 	FileDelete,%CheckMe%
 }
 
-RunTomato := ComSpec . " /c " . python . " tomato.py -i " . InputFolder . "/output.avi -m " . TomatoMode . " -c " . TomatoFrameCount . " -n " . TomatoFramePosition . " ./" . OutputFolder . "/output-moshed.avi"
+RunTomato := ComSpec . " /c " . python . " tomato.py -i " . InputFolder . "/output.avi -m " . TomatoMode . " -c " . TomatoFrameCount . " -n " . TomatoFramePosition . " " . OutputFolder . "/output-moshed.avi"
 ;msgbox, %RunTomato%
 ;runwait, %ComSpec% /k %python% tomato.py -i %InputFolder%/output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed.avi
 runwait, %RunTomato%
@@ -2398,4 +2460,3 @@ Return
 GuiEscape:
 GuiClose:
 ExitApp
-
