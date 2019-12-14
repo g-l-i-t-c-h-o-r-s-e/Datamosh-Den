@@ -83,6 +83,11 @@ Gui Add, Text, x293 y195 w62 h23 +0x200 +BackgroundTrans, Frame Count
 Gui Add, Text, x288 y242 w71 h23 +0x200 +BackgroundTrans, Frame Position
 Gui Add, Text, x282 y148 w81 h23 +0x200 +BackgroundTrans, Datamosh Mode
 Gui Add, Button, x269 y289 w110 h46 vTomatoMOSHIT gCommenceTomatoDatamosh -E0x200 BackgroundTrans -Border, DATAMOSH IT
+Gui Add, Edit, x221 y214 w36 h21 vignoredframes, 1
+Gui Add, Text, x208 y198 w67 h15, Ignore Frames
+Gui Add, Edit, x394 y214 w36 h21 vglitchedframes, -1
+Gui Add, Text, x380 y198 w67 h15, Glitch Amount
+
 
 ;WinSet, Region, % "0-0" "W" 110-1 " " "H" 46-1 R10-10, DATAMOSH IT
 ;GuiControl, Move, TomatoMOSHIT, w110-2 h46-2 x269-1 y289-1
@@ -117,6 +122,10 @@ GuiControl, 1:Disable, TomatoFrameCount
 GuiControl, 1:Disable, TomatoFramePosition
 GuiControl, 1:Disable, TomatoMOSHIT
 GuiControl, 1:Disable, TomatoRecycle
+
+GuiControl, 1:Disable, glitchedframes
+GuiControl, 1:Disable, ignoredframes
+
 GuiControl, 1:Disable, ResolutionVar
 GuiControl, 1:Disable, FrameRateVar
 GuiControl, 1:Disable, Recompress
@@ -187,6 +196,7 @@ if (IsOtherOptionsOn = 1) {
 
 if (IsOtherOptionsOn = 0) {
 	msgbox, Disabled Extra Options :(
+	WinHide, Extra ; >:3
 	
 	global UseOtherOptions = 0		
 	global EncHori := 0
@@ -925,6 +935,8 @@ if (EnableMEncoderCodec = 1) {
 	GuiControl, 1:Disable, TomatoFramePosition
 	GuiControl, 1:Disable, TomatoMOSHIT
 	GuiControl, 1:Disable, TomatoRecycle
+	GuiControl, 1:Disable, glitchedframes
+	GuiControl, 1:Disable, ignoredframes
 	GuiControl, 1:, FFmpegOptions, -bf 0 -g 999999 -an
 	
 	
@@ -951,6 +963,8 @@ if (EnableFFmpegCodec = 1) {
 	GuiControl, 1:Disable, TomatoFramePosition
 	GuiControl, 1:Disable, TomatoMOSHIT
 	GuiControl, 1:Disable, TomatoRecycle
+	GuiControl, 1:Disable, glitchedframes
+	GuiControl, 1:Disable, ignoredframes
 	GuiControl, 1:, MEncoderOptions, -nosound -noskip
 	
 	
@@ -1455,6 +1469,8 @@ GuiControl, 1:Enable, TomatoMode
 GuiControl, 1:Enable, TomatoFrameCount
 GuiControl, 1:Enable, TomatoFramePosition
 GuiControl, 1:Enable, TomatoMOSHIT
+GuiControl, 1:Enable, glitchedframes
+GuiControl, 1:Enable, ignoredframes
 AllowChexr := 1
 EncodeReversibleFilterVal := "" ;Clear the var to avoid bugs becuase I'm dumb and losing track of what I'm doing.
 Return
@@ -1523,6 +1539,8 @@ GuiControl, 1:Enable, TomatoMode
 GuiControl, 1:Enable, TomatoFrameCount
 GuiControl, 1:Enable, TomatoFramePosition
 GuiControl, 1:Enable, TomatoMOSHIT
+GuiControl, 1:Enable, glitchedframes
+GuiControl, 1:Enable, ignoredframes
 Return
 
 ;AMV2 Watermark Removal Presets
@@ -1597,6 +1615,8 @@ GuiControl, 1:Disable, TomatoFrameCount
 GuiControl, 1:Disable, TomatoFramePosition
 GuiControl, 1:Disable, TomatoMOSHIT
 GuiControl, 1:Disable, TomatoRecycle
+GuiControl, 1:Disable, glitchedframes
+GuiControl, 1:Disable, ignoredframes
 
 
 OutputFilename := "./FFmpeg-Output/" . FFmpegCodecs .  "/output.avi"
@@ -1706,6 +1726,8 @@ GuiControl, 1:Enable, TomatoMode
 GuiControl, 1:Enable, TomatoFrameCount
 GuiControl, 1:Enable, TomatoFramePosition
 GuiControl, 1:Enable, TomatoMOSHIT
+GuiControl, 1:Enable, glitchedframes
+GuiControl, 1:Enable, ignoredframes
 AllowChexr := 1
 EncodeReversibleFilterVal := "" ;Clear the var to avoid bugs because I'm dumb and losing track of what I'm doing.
 Return
@@ -2138,13 +2160,13 @@ NoGetDiffPls := 0
 ForcedBake := 0
 ChexrWasUsed := 0 ;If you use Datamosh It immediately after using chexr, this will reset this var and use "output-moshed.avi" instead of "output.avi".
 
-;Remove the datamoshed avi if it existms before using Tomato to Datamosh, to avoid file conflicts.
+;Remove the datamoshed avi if it exists before using Tomato to Datamosh, to avoid file conflicts.
 CheckMe := OutputFolder . "\output-moshed.avi"
 if FileExist(CheckMe) {
 	FileDelete,%CheckMe%
 }
 
-RunTomato := ComSpec . " /c " . python . " tomato.py -i " . InputFolder . "/output.avi -m " . TomatoMode . " -c " . TomatoFrameCount . " -n " . TomatoFramePosition . " " . OutputFolder . "/output-moshed.avi"
+RunTomato := ComSpec . " /c " . python . " tomato.py -i " . InputFolder . "/output.avi -m " . TomatoMode . " -c " . TomatoFrameCount . " -n " . TomatoFramePosition . " -ss " . ignoredframes . " -t " . glitchedframes . " " . OutputFolder . "/output-moshed.avi"
 ;msgbox, %RunTomato%
 ;runwait, %ComSpec% /k %python% tomato.py -i %InputFolder%/output.avi -m %TomatoMode% -c %TomatoFrameCount% -n %TomatoFramePosition% ./%OutputFolder%/output-moshed.avi
 runwait, %RunTomato%
