@@ -36,6 +36,7 @@ Hopefully this will make Datamoshing more accesible to people on Windows who are
 
 • Probably more I haven't mentioned idk
 
+• Out-Of-The-Box Frei0r Filter Usage, NO ASSEMBLY REQUIRED!!!
 
 # B̶e̶c̶a̶u̶s̶e̶ ̶g̶i̶t̶h̶u̶b̶ ̶w̶o̶n̶'̶t̶ ̶l̶e̶t̶ ̶m̶e̶ ̶u̶p̶l̶o̶a̶d̶ ̶b̶i̶g̶ ̶a̶s̶s̶ ̶f̶i̶l̶e̶s̶,̶ ̶y̶o̶u̶'̶l̶l̶ ̶n̶e̶e̶d̶ ̶t̶o̶ ̶g̶r̶a̶b̶ ̶a̶ ̶c̶o̶p̶y̶ ̶o̶f̶ ̶F̶F̶m̶p̶e̶g̶ ̶a̶n̶d̶ ̶F̶F̶p̶l̶a̶y̶ ̶y̶o̶u̶r̶s̶e̶l̶f̶ ̶f̶r̶o̶m̶ [h̶e̶r̶e̶]( https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.2.1-win64-static.zip)
 YOU DONT NEED TO DO THE ABOVE ANYMORE SINCE MY SCRIPT DOWNLOADS FFMPEG FOR YOU.                  
