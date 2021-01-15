@@ -82,3 +82,5 @@ You can optionally grab a copy of it from [here.]( https://github.com/itsKaspar/
 • Option to save the output files to the folder where the video source is [✖]
 
 • More codecs [✖]
+
+# If you would like to help the cause; our wallet: `17YcpEtKybVHAoTgirJy94p1Hygtbvh21p`
